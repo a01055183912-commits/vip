@@ -292,7 +292,6 @@ footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--lin
 </main>
 <footer><div class="wrap">케이스 수치(A백화점)는 교육용 가상 데이터입니다. 벤치마킹 수치는 2026년 9월 확인 기준이며 수시로 바뀌므로 근거 찾기 탭에서 최신 공지를 확인하십시오. 워크시트 입력 내용은 개인 학습 공간별로 이 브라우저에만 저장되며 다른 교육생에게 보이지 않습니다.</div></footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
 <script>
 /*@DATA@*/
 </script>
@@ -537,9 +536,10 @@ footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--lin
           <button class="btn ghost" id="clearWs">이 워크시트 비우기</button>
           <span class="status" id="wsStatus" role="status"></span>
         </div>
-        <div class="dl"><h3>작성한 실습지 내려받기</h3><p>교안 실습지와 같은 모양의 PowerPoint(.pptx) 파일에 내가 쓴 답이 채워집니다. 칸에 다 들어가지 않으면 다음 장으로 이어집니다.</p>
+        <div class="dl"><h3>작성한 실습지 내려받기</h3><p>교안 실습지와 같은 모양에 내가 쓴 답이 채워집니다. 칸에 다 들어가지 않으면 다음 장으로 이어집니다. 누르면 저장 확인 창이 뜨고, 저장을 골라야 받아집니다. PowerPoint가 받아지지 않으면 이미지(.png)로 받으십시오.</p>
           <label for="dlAns"><input type="checkbox" id="dlAns"${store.get(`dlAns`, false) ? ` checked` : ``}> 예시답안 장도 함께 넣기</label>
-          <div class="row"><button class="btn primary" id="dlOne">이 실습지 내려받기 (.pptx)</button><button class="btn" id="dlAll">작성한 실습지 전체 한 파일로 (.pptx)</button><span class="status" id="dlStatus" role="status"></span></div>
+          <div class="row"><button class="btn primary" id="dlOne" data-fmt="pptx">이 실습지 (.pptx)</button><button class="btn" id="dlAll" data-fmt="pptx">작성한 실습지 전체 (.pptx)</button><button class="btn" id="dlOnePng" data-fmt="png">이 실습지 이미지 (.png)</button></div>
+          <p class="status" id="dlStatus" role="status"></p>
         </div>
         ${ans}
       </div></div>`;
@@ -563,17 +563,16 @@ footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--lin
       renderWs(); $(`#wsStatus`).textContent = `비웠습니다`;
     }
     if (e.target.id === `dlAns`) store.set(`dlAns`, e.target.checked);
-    if (e.target.id === `dlOne` || e.target.id === `dlAll`) {
-      const st = $(`#dlStatus`);
-      if (typeof PptxGenJS === `undefined`) { st.textContent = `파일 생성 도구를 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침하십시오.`; return; }
-      const list = e.target.id === `dlOne` ? [w] : WS.filter(x => wsFilled(x)[0] > 0 || store.get(wsKey(x.id, `team`), ``) || store.get(wsKey(x.id, `author`), ``));
+    if ([`dlOne`, `dlAll`, `dlOnePng`].includes(e.target.id)) {
+      const st = $(`#dlStatus`), fmt = e.target.dataset.fmt;
+      const list = e.target.id !== `dlAll` ? [w] : WS.filter(x => wsFilled(x)[0] > 0 || store.get(wsKey(x.id, `team`), ``) || store.get(wsKey(x.id, `author`), ``));
       if (!list.length) { st.textContent = `아직 작성한 실습지가 없습니다.`; return; }
       st.textContent = `파일을 만드는 중입니다…`;
       try {
-        const blob = await buildPptx(list, $(`#dlAns`).checked);
+        const blob = fmt === `png` ? await buildPng(list, $(`#dlAns`).checked) : await buildPptx(list, $(`#dlAns`).checked);
         const safe = uname.replace(/[\\/:*?"<>|]/g, ``);
-        await saveFile(list.length === 1 ? `${list[0].label.replace(/\s/g, ``)}_${list[0].title}_${safe}.pptx` : `VIP멤버십_실습지_${safe}.pptx`, blob, st);
-      } catch (err) { st.textContent = `파일을 만들지 못했습니다. (${err && err.message || err})`; }
+        await saveFile((list.length === 1 ? `${list[0].label.replace(/\s/g, ``)}_${list[0].title}_${safe}` : `VIP멤버십_실습지_${safe}`) + `.` + fmt, blob, st);
+      } catch (err) { st.textContent = `파일을 만들지 못했습니다. ${err && err.message || err}`; }
     }
     if (e.target.id === `copyWs`) {
       const lines = [`# ${w.label} ${w.title}`, `조: ${store.get(wsKey(w.id, `team`), ``)} / 작성자: ${store.get(wsKey(w.id, `author`), ``)}`, ``];
@@ -590,83 +589,152 @@ footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--lin
   });
 
 
-  /* ---------- 실습지 PPTX (교안 실습지 레이아웃: 13.33 × 7.5in) ---------- */
+  /* ---------- 실습지 파일 (교안 실습지 레이아웃: 13.33 × 7.5in) ---------- */
+  // 1) layout()이 장(page) 단위 배치를 만들고 2) PPTX 또는 PNG로 그립니다. 줄 수 계산은 출력별 measure 함수를 씁니다.
   const PX = { coral: `E05A38`, head: `FBEDE9`, ink: `131313`, grey: `6B6B6B`, line: `D9D9D9`, font: `Malgun Gothic` };
   const BODY_PT = 10.5, TOP = 1.95, BOTTOM = 6.85, W = 12.13, LEFT = 0.6;
-  function cellLines(text, wIn, pt) {
-    const cpl = Math.max(4, Math.floor((wIn - 0.16) * 72 / (pt * 1.02)));
+  const estLines = (text, wIn) => { // PowerPoint용 추정: 한글 1, 영문·숫자 0.55 글자폭
+    const cpl = Math.max(4, Math.floor((wIn - 0.16) * 72 / (BODY_PT * 1.02)));
     return String(text || ``).split(`\n`).reduce((a, ln) => a + Math.max(1, Math.ceil([...ln].reduce((n, ch) => n + (ch.charCodeAt(0) > 0x2E80 ? 1 : 0.55), 0) / cpl)), 0);
-  }
-  const rowH = (cells, widths, min) => Math.max(min, ...cells.map((c, i) => cellLines(c, widths[i], BODY_PT) * BODY_PT * 1.32 / 72 + 0.16));
+  };
   function colWidths(cols) {
     const n = cols.length;
     if (n === 2) return [3.4, W - 3.4];
-    if (n === 3) return [1.13, 7.0, 4.0].map(x => x * W / 12.13);
+    if (n === 3) return [1.13, 7.0, 4.0];
     const first = n >= 7 ? 1.3 : 2.0, rest = (W - first) / (n - 1);
     return [first, ...Array(n - 1).fill(rest)];
   }
-  function frame(pptx, w, cont, isAnswer) {
-    const sl = pptx.addSlide(); sl.background = { color: `FFFFFF` };
-    sl.addText(`3-5. VIP 마케팅`, { x: 0.72, y: 0.16, w: 6.8, h: 0.55, fontFace: PX.font, fontSize: 22, color: PX.ink });
-    sl.addShape(pptx.ShapeType.line, { x: 0.6, y: 0.74, w: 12.13, h: 0, line: { color: PX.coral, width: 1.25 } });
-    sl.addShape(pptx.ShapeType.rect, { x: 0.6, y: 0.95, w: 0.06, h: 0.4, fill: { color: PX.coral }, line: { color: PX.coral, width: 0 } });
-    sl.addText(`${w.label}  ${w.title}${isAnswer ? `  ·  예시답안` : ``}${cont ? `  (계속)` : ``}`, { x: 0.78, y: 0.92, w: 9.6, h: 0.46, fontFace: PX.font, fontSize: 21, bold: true, color: PX.ink, margin: 0 });
-    sl.addShape(pptx.ShapeType.roundRect, { x: 11.13, y: 0.95, w: 1.6, h: 0.42, fill: { color: PX.coral }, line: { color: PX.coral, width: 0 }, rectRadius: 0.21 });
-    sl.addText(w.time, { x: 11.13, y: 0.95, w: 1.6, h: 0.42, fontFace: PX.font, fontSize: 12.5, bold: true, color: `FFFFFF`, align: `center`, valign: `middle`, margin: 0 });
-    sl.addText(w.goal, { x: 0.78, y: 1.42, w: 7.0, h: 0.32, fontFace: PX.font, fontSize: 11.5, color: PX.grey, margin: 0 });
-    const team = store.get(wsKey(w.id, `team`), ``), author = store.get(wsKey(w.id, `author`), ``) || uname;
-    sl.addText([
-      { text: `조  `, options: { color: PX.grey } }, { text: team || `______________`, options: { color: team ? PX.ink : PX.grey, bold: !!team } },
-      { text: `          작성자  `, options: { color: PX.grey } }, { text: author, options: { color: PX.ink, bold: true } },
-    ], { x: 7.93, y: 1.42, w: 4.8, h: 0.3, fontFace: PX.font, fontSize: 11.5, align: `right`, margin: 0 });
-    return sl;
-  }
-  function footer(sl, text) {
-    if (text) sl.addText(text, { x: 0.6, y: 6.95, w: 12.13, h: 0.42, fontFace: PX.font, fontSize: 10.5, color: PX.coral, valign: `top`, margin: 0, fit: `shrink` });
-  }
-  // blocks: [{cols, widths, rows:[[...]], bold0}] → 여러 장에 나눠 배치
-  function layout(pptx, w, blocks, foot, isAnswer) {
-    let sl = frame(pptx, w, false, isAnswer), y = TOP, first = true;
-    const hdrOpt = { fill: { color: PX.head }, bold: true, color: PX.ink };
-    blocks.forEach(b => {
-      const hh = rowH(b.cols, b.widths, 0.42);
-      const rowsH = b.rows.map(r => rowH(r, b.widths, 0.44));
-      let i = 0;
-      while (i < b.rows.length) {
-        if (y + hh + rowsH[i] > BOTTOM && !(y === TOP)) { footer(sl, first ? foot : ``); first = false; sl = frame(pptx, w, true, isAnswer); y = TOP; }
-        const chunk = [], hs = [hh]; let yy = y + hh;
-        while (i < b.rows.length && (yy + rowsH[i] <= BOTTOM || chunk.length === 0)) { chunk.push(b.rows[i]); hs.push(rowsH[i]); yy += rowsH[i]; i++; }
-        const data = [b.cols.map(c => ({ text: c, options: hdrOpt })), ...chunk.map(r => r.map((c, ci) => ({ text: String(c ?? ``), options: ci === 0 && b.bold0 ? { bold: true } : {} })))];
-        sl.addTable(data, { x: LEFT, y, w: W, colW: b.widths, rowH: hs, fontFace: PX.font, fontSize: BODY_PT, color: PX.ink, valign: `middle`, border: { type: `solid`, pt: 0.75, color: PX.line }, margin: [0.04, 0.08, 0.04, 0.08], autoPage: false });
-        y = yy + 0.22;
-        if (i < b.rows.length) { footer(sl, first ? foot : ``); first = false; sl = frame(pptx, w, true, isAnswer); y = TOP; }
-      }
-    });
-    footer(sl, first ? foot : ``);
-  }
   function learnerBlocks(w) {
     const blocks = w.tables.map((t, ti) => ({
-      cols: t.cols, widths: colWidths(t.cols), bold0: true,
+      cols: t.cols, widths: colWidths(t.cols),
       rows: t.rows.map((lab, ri) => t.cols.map((c, ci) => (ci === 0 && lab) ? lab : (t.fixed && t.fixed[ci]) ? t.fixed[ci][ri] : store.get(wsKey(w.id, ti, ri, ci), ``))),
     }));
-    if (w.questions && w.questions.length) blocks.push({ cols: [`질문`, `나의 답변`], widths: colWidths([0, 0]), bold0: true, rows: w.questions.map((q, qi) => [q, store.get(wsKey(w.id, `q`, qi), ``)]) });
+    if (w.questions && w.questions.length) blocks.push({ cols: [`질문`, `나의 답변`], widths: colWidths([0, 0]), rows: w.questions.map((q, qi) => [q, store.get(wsKey(w.id, `q`, qi), ``)]) });
     return blocks;
   }
   function answerBlocks(w) {
-    const a = w.answer, blocks = a.tables.map(t => ({ cols: t.cols, widths: colWidths(t.cols), bold0: true, rows: t.rows }));
+    const a = w.answer, blocks = a.tables.map(t => ({ cols: t.cols, widths: colWidths(t.cols), rows: t.rows }));
     const extra = [...(a.qa || []), ...(a.notes || []).map(n => [`참고`, n]), ...(a.coach ? [[`생각할 질문`, a.coach]] : [])];
-    if (extra.length) blocks.push({ cols: [`항목`, `예시답안`], widths: colWidths([0, 0]), bold0: true, rows: extra });
+    if (extra.length) blocks.push({ cols: [`항목`, `예시답안`], widths: colWidths([0, 0]), rows: extra });
     return blocks;
   }
+  function layout(w, blocks, foot, isAnswer, lines) {
+    const rh = (cells, widths, min) => Math.max(min, ...cells.map((c, i) => lines(String(c ?? ``), widths[i]) * BODY_PT * 1.32 / 72 + 0.16));
+    const pages = []; let pg, y;
+    const newPage = () => { pg = { w, isAnswer, cont: pages.length > 0, tables: [], foot: pages.length ? `` : foot }; pages.push(pg); y = TOP; };
+    newPage();
+    blocks.forEach(b => {
+      const hh = rh(b.cols, b.widths, 0.42), hs = b.rows.map(r => rh(r, b.widths, 0.44));
+      const total = hh + hs.reduce((x, v) => x + v, 0);
+      if (y > TOP && y + total > BOTTOM && TOP + total <= BOTTOM) newPage(); // 새 장에 통째로 들어가는 표는 나누지 않음
+      let i = 0;
+      while (i < b.rows.length) {
+        if (y > TOP && y + hh + hs[i] > BOTTOM) newPage();
+        const t = { y, cols: b.cols, widths: b.widths, hh, rows: [], hs: [] }; let yy = y + hh;
+        while (i < b.rows.length && (yy + hs[i] <= BOTTOM || !t.rows.length)) { t.rows.push(b.rows[i]); t.hs.push(hs[i]); yy += hs[i]; i++; }
+        pg.tables.push(t); y = yy + 0.22;
+        if (i < b.rows.length) newPage();
+      }
+    });
+    return pages;
+  }
+  function allPages(list, withAnswers, lines) {
+    return list.flatMap(w => [...layout(w, learnerBlocks(w), w.hint, false, lines), ...(withAnswers && w.answer ? layout(w, answerBlocks(w), ``, true, lines) : [])]);
+  }
+  const headTitle = pg => `${pg.w.label}  ${pg.w.title}${pg.isAnswer ? `  ·  예시답안` : ``}${pg.cont ? `  (계속)` : ``}`;
+  const teamOf = w => store.get(wsKey(w.id, `team`), ``), authorOf = w => store.get(wsKey(w.id, `author`), ``) || uname;
+
+  // PptxGenJS: 기본 CDN이 막히면 허용된 다른 CDN에서 차례로 불러옵니다.
+  const PPTX_SRC = [`https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js`, `https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js`, `https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js`];
+  async function loadPptx() {
+    if (typeof PptxGenJS !== `undefined`) return true;
+    for (const src of PPTX_SRC) {
+      const ok = await new Promise(res => { const s = document.createElement(`script`); s.src = src; s.onload = () => res(typeof PptxGenJS !== `undefined`); s.onerror = () => res(false); document.head.append(s); setTimeout(() => res(typeof PptxGenJS !== `undefined`), 15000); });
+      if (ok) return true;
+    }
+    return false;
+  }
   async function buildPptx(list, withAnswers) {
+    if (!(await loadPptx())) throw new Error(`PowerPoint 생성 도구를 불러오지 못했습니다. 네트워크가 막혀 있다면 이미지(.png)로 받으십시오.`);
     const pptx = new PptxGenJS();
     pptx.layout = `LAYOUT_WIDE`; pptx.author = uname; pptx.title = `3-5. VIP 멤버십 마케팅 실습지`;
     pptx.theme = { headFontFace: PX.font, bodyFontFace: PX.font };
-    list.forEach(w => {
-      layout(pptx, w, learnerBlocks(w), w.hint, false);
-      if (withAnswers && w.answer) layout(pptx, w, answerBlocks(w), ``, true);
+    const hdrOpt = { fill: { color: PX.head }, bold: true, color: PX.ink };
+    allPages(list, withAnswers, estLines).forEach(pg => {
+      const sl = pptx.addSlide(); sl.background = { color: `FFFFFF` };
+      sl.addText(`3-5. VIP 마케팅`, { x: 0.72, y: 0.16, w: 6.8, h: 0.55, fontFace: PX.font, fontSize: 22, color: PX.ink });
+      sl.addShape(pptx.ShapeType.line, { x: 0.6, y: 0.74, w: 12.13, h: 0, line: { color: PX.coral, width: 1.25 } });
+      sl.addShape(pptx.ShapeType.rect, { x: 0.6, y: 0.95, w: 0.06, h: 0.4, fill: { color: PX.coral }, line: { color: PX.coral, width: 0 } });
+      sl.addText(headTitle(pg), { x: 0.78, y: 0.92, w: 9.6, h: 0.46, fontFace: PX.font, fontSize: 21, bold: true, color: PX.ink, margin: 0 });
+      sl.addShape(pptx.ShapeType.roundRect, { x: 11.13, y: 0.95, w: 1.6, h: 0.42, fill: { color: PX.coral }, line: { color: PX.coral, width: 0 }, rectRadius: 0.21 });
+      sl.addText(pg.w.time, { x: 11.13, y: 0.95, w: 1.6, h: 0.42, fontFace: PX.font, fontSize: 12.5, bold: true, color: `FFFFFF`, align: `center`, valign: `middle`, margin: 0 });
+      sl.addText(pg.w.goal, { x: 0.78, y: 1.42, w: 7.0, h: 0.32, fontFace: PX.font, fontSize: 11.5, color: PX.grey, margin: 0 });
+      const team = teamOf(pg.w);
+      sl.addText([
+        { text: `조  `, options: { color: PX.grey } }, { text: team || `______________`, options: { color: team ? PX.ink : PX.grey, bold: !!team } },
+        { text: `          작성자  `, options: { color: PX.grey } }, { text: authorOf(pg.w), options: { color: PX.ink, bold: true } },
+      ], { x: 7.93, y: 1.42, w: 4.8, h: 0.3, fontFace: PX.font, fontSize: 11.5, align: `right`, margin: 0 });
+      pg.tables.forEach(t => {
+        const data = [t.cols.map(c => ({ text: c, options: hdrOpt })), ...t.rows.map(r => r.map((c, ci) => ({ text: String(c ?? ``), options: ci === 0 ? { bold: true } : {} })))];
+        sl.addTable(data, { x: LEFT, y: t.y, w: W, colW: t.widths, rowH: [t.hh, ...t.hs], fontFace: PX.font, fontSize: BODY_PT, color: PX.ink, valign: `middle`, border: { type: `solid`, pt: 0.75, color: PX.line }, margin: [0.04, 0.08, 0.04, 0.08], autoPage: false });
+      });
+      if (pg.foot) sl.addText(pg.foot, { x: 0.6, y: 6.95, w: 12.13, h: 0.42, fontFace: PX.font, fontSize: 10.5, color: PX.coral, valign: `top`, margin: 0, fit: `shrink` });
     });
     return await pptx.write({ outputType: `blob` });
+  }
+
+  // PNG: 같은 배치를 캔버스에 그립니다. 외부 도구가 필요 없습니다. 여러 장은 세로로 이어 붙입니다.
+  async function buildPng(list, withAnswers) {
+    const S = 120, PW = 13.333 * S, PH = 7.5 * S, GAP = 24;
+    const ff = `"IBM Plex Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif`;
+    try { await document.fonts.ready; } catch {}
+    const m = document.createElement(`canvas`).getContext(`2d`);
+    const fpx = BODY_PT / 72 * S;
+    const wrap = (text, maxW, font) => {
+      m.font = font; const out = [];
+      String(text || ``).split(`\n`).forEach(par => {
+        let line = ``;
+        for (const ch of par) { if (m.measureText(line + ch).width > maxW && line) { const sp = line.lastIndexOf(` `); if (sp > line.length * 0.6) { out.push(line.slice(0, sp)); line = line.slice(sp + 1) + ch; } else { out.push(line); line = ch; } } else line += ch; }
+        out.push(line);
+      });
+      return out;
+    };
+    const bodyFont = `${fpx}px ${ff}`, boldFont = `600 ${fpx}px ${ff}`;
+    const lines = (text, wIn) => wrap(text, (wIn - 0.16) * S, boldFont).length;
+    const pages = allPages(list, withAnswers, lines);
+    const cv = document.createElement(`canvas`); cv.width = PW; cv.height = pages.length * PH + (pages.length - 1) * GAP;
+    const c = cv.getContext(`2d`); c.fillStyle = `#e9e9e9`; c.fillRect(0, 0, cv.width, cv.height);
+    const hex = h => `#` + h;
+    pages.forEach((pg, pi) => {
+      const oy = pi * (PH + GAP), X = v => v * S, Y = v => oy + v * S;
+      c.fillStyle = `#ffffff`; c.fillRect(0, oy, PW, PH); c.textBaseline = `top`;
+      c.fillStyle = hex(PX.ink); c.font = `${22 / 72 * S}px ${ff}`; c.fillText(`3-5. VIP 마케팅`, X(0.72), Y(0.28));
+      c.fillStyle = hex(PX.coral); c.fillRect(X(0.6), Y(0.74), X(12.13), 2); c.fillRect(X(0.6), Y(0.95), X(0.06), X(0.4));
+      c.fillStyle = hex(PX.ink); c.font = `700 ${21 / 72 * S}px ${ff}`; c.fillText(headTitle(pg), X(0.78), Y(0.98));
+      c.fillStyle = hex(PX.coral); c.beginPath(); c.roundRect ? c.roundRect(X(11.13), Y(0.95), X(1.6), X(0.42), X(0.21)) : c.rect(X(11.13), Y(0.95), X(1.6), X(0.42)); c.fill();
+      c.fillStyle = `#ffffff`; c.font = `600 ${12.5 / 72 * S}px ${ff}`; c.textAlign = `center`; c.textBaseline = `middle`; c.fillText(pg.w.time, X(11.93), Y(1.16));
+      c.textAlign = `left`; c.textBaseline = `top`; c.fillStyle = hex(PX.grey); c.font = `${11.5 / 72 * S}px ${ff}`; c.fillText(pg.w.goal, X(0.78), Y(1.46));
+      c.textAlign = `right`; c.fillText(`조  ${teamOf(pg.w) || `______________`}          작성자  ${authorOf(pg.w)}`, X(12.73), Y(1.46)); c.textAlign = `left`;
+      pg.tables.forEach(t => {
+        let ry = t.y;
+        [[t.cols, t.hh, true], ...t.rows.map((r, i) => [r, t.hs[i], false])].forEach(([cells, h, head]) => {
+          let cx = LEFT;
+          cells.forEach((txt, ci) => {
+            const cw = t.widths[ci];
+            c.fillStyle = head ? hex(PX.head) : `#ffffff`; c.fillRect(X(cx), Y(ry), X(cw), X(h));
+            c.strokeStyle = hex(PX.line); c.lineWidth = 1; c.strokeRect(X(cx), Y(ry), X(cw), X(h));
+            const font = head || ci === 0 ? boldFont : bodyFont, ls = wrap(txt, (cw - 0.16) * S, font), lh = fpx * 1.32;
+            c.font = font; c.fillStyle = hex(PX.ink);
+            const top = Y(ry) + (X(h) - ls.length * lh) / 2 + (lh - fpx) / 2;
+            ls.forEach((l, li) => c.fillText(l, X(cx + 0.08), top + li * lh));
+            cx += cw;
+          });
+          ry += h;
+        });
+      });
+      if (pg.foot) { c.fillStyle = hex(PX.coral); c.font = `600 ${10.5 / 72 * S}px ${ff}`; wrap(pg.foot, X(12.13), c.font).slice(0, 3).forEach((l, li) => c.fillText(l, X(0.6), Y(6.95) + li * fpx * 1.3)); }
+    });
+    return await new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error(`이미지를 만들지 못했습니다.`)), `image/png`));
   }
 
   /* ---------- search ---------- */
@@ -780,10 +848,16 @@ footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--lin
     try { dl = window.claude && window.claude.use ? await window.claude.use(`downloads`) : null; } catch { dl = null; }
     if (dl) {
       try { await dl.save({ filename, data }); say(`${filename} 내려받기를 마쳤습니다.`); }
-      catch (err) { say(err && err.code === `declined` ? `내려받기를 취소했습니다.` : `이 화면에서는 파일을 내려받을 수 없습니다. (${err && err.code || `오류`})`); }
+      catch (err) {
+        const code = err && err.code;
+        say(code === `declined` ? `내려받기를 취소했습니다. 다시 누르고 확인 창에서 저장을 고르십시오.`
+          : code === `rate_limited` ? `저장 확인 창이 이미 열려 있습니다. 그 창에서 저장을 누르거나 잠시 뒤 다시 시도하십시오.`
+          : code === `extension_not_enabled` || code === `rejected_extension` ? `이 화면에서는 ${filename.split(`.`).pop()} 파일 저장이 허용되지 않습니다. 이미지(.png)로 받으십시오.`
+          : `파일을 저장하지 못했습니다. (${code || (err && err.message) || `알 수 없는 오류`})`);
+      }
       return;
     }
-    if (window.claude) { say(`이 화면에서는 파일을 내려받을 수 없습니다.`); return; }
+    if (window.claude) { say(`이 화면에서 파일 저장 기능을 쓸 수 없습니다. 페이지를 새로고침한 뒤 다시 시도하십시오.`); return; }
     const blob = data instanceof Blob ? data : new Blob([data]);
     const a = document.createElement(`a`); a.href = URL.createObjectURL(blob); a.download = filename;
     document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
