@@ -1,0 +1,1186 @@
+<title>VIP 멤버십 마케팅 랩</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700;900&display=swap">
+<style>
+/* Layout: 멤버십 카드처럼 등급(tier)을 축으로 한 단일 칼럼 학습 노트 + 상단 고정 탭. 흐름 → 계산 → 실습 → 근거 순으로 이동 */
+:root {
+  --bg: #eef0f3;
+  --surface: #ffffff;
+  --sunk: #e4e7ec;
+  --ink: #18202e;
+  --muted: #5a6476;
+  --line: #d3d8e0;
+  --accent: #7a1f35;
+  --accent-soft: #f4e4e8;
+  --brass: #8a6a2c;
+  --brass-soft: #f3ecdc;
+  --good: #2f6b45;
+  --warn: #9a5b12;
+  --bad: #a3261f;
+  --f-display: "Noto Serif KR", "Apple SD Gothic Neo", "Malgun Gothic", serif;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11141a; --surface: #191e27; --sunk: #222834; --ink: #e7e9ee; --muted: #9aa3b3; --line: #2e3542;
+    --accent: #e0889b; --accent-soft: #3a1f27; --brass: #d2b475; --brass-soft: #2f2a1d;
+    --good: #7fc79a; --warn: #e3ac62; --bad: #f08a80; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11141a; --surface: #191e27; --sunk: #222834; --ink: #e7e9ee; --muted: #9aa3b3; --line: #2e3542;
+  --accent: #e0889b; --accent-soft: #3a1f27; --brass: #d2b475; --brass-soft: #2f2a1d;
+  --good: #7fc79a; --warn: #e3ac62; --bad: #f08a80; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.65; margin: 0; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.3; margin: 0; }
+a { color: var(--accent); }
+button, input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+/* header */
+header.top { padding-block: 28px 0; }
+.brand { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.brand h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 900; letter-spacing: -.01em; }
+.brand h1 small { display: block; font-family: var(--f-body); font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0; margin-bottom: 6px; }
+.tierline { display: flex; gap: 3px; align-items: flex-end; height: 34px; }
+.tierline span { width: 14px; background: var(--brass); border-radius: 2px 2px 0 0; opacity: .35; }
+.tierline span:nth-child(1) { height: 30%; } .tierline span:nth-child(2) { height: 45%; opacity: .5; }
+.tierline span:nth-child(3) { height: 62%; opacity: .65; } .tierline span:nth-child(4) { height: 80%; opacity: .8; }
+.tierline span:nth-child(5) { height: 100%; background: var(--accent); opacity: 1; }
+.lede { max-width: 62ch; color: var(--muted); margin: 12px 0 0; }
+
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); margin-top: 20px; }
+nav.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+nav.tabs a { flex: none; padding: 12px 14px 10px; text-decoration: none; color: var(--muted); font-weight: 600; border-bottom: 2px solid transparent; white-space: nowrap; }
+nav.tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.tabs a:hover { color: var(--ink); }
+main { padding-block: 28px 80px; }
+section.view { display: grid; gap: 28px; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 13.5px; font-weight: 600; text-decoration: none; color: var(--ink); }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn.ghost { background: transparent; }
+.btn.sm { padding: 4px 9px; font-size: 12.5px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* flow spine */
+.spine { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; counter-reset: p; }
+.spine a { position: relative; display: grid; gap: 2px; padding: 12px 10px 10px; text-decoration: none; color: var(--ink); border-top: 3px solid var(--line); }
+.spine a:hover { border-top-color: var(--accent); }
+.spine a b { font-family: var(--f-mono); font-size: 12px; color: var(--accent); font-weight: 500; }
+.spine a span { font-weight: 600; font-size: 14px; }
+.spine a em { font-style: normal; font-size: 12px; color: var(--muted); line-height: 1.4; }
+@media (max-width: 760px) { .spine { grid-template-columns: repeat(2, minmax(0, 1fr)); } .spine a:last-child { grid-column: span 2; } }
+
+.part { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.part-head { display: grid; gap: 6px; padding-top: 8px; }
+.part-head h2 { font-size: clamp(22px, 3.4vw, 30px); }
+.part-q { font-family: var(--f-display); font-size: 17px; color: var(--accent); font-weight: 600; margin: 0; }
+.slides { display: grid; gap: 10px; }
+details.slide { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+details.slide > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 52px minmax(0,1fr) auto; gap: 12px; align-items: baseline; padding: 14px 16px; }
+details.slide > summary::-webkit-details-marker { display: none; }
+details.slide > summary .pg { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+details.slide > summary h3 { font-size: 17px; }
+details.slide > summary p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
+details.slide > summary .chev { color: var(--muted); font-size: 13px; transition: transform .15s; }
+details.slide[open] > summary .chev { transform: rotate(90deg); }
+.slide-body { padding: 0 16px 16px 80px; display: grid; gap: 14px; min-width: 0; }
+@media (max-width: 640px) { .slide-body { padding-left: 16px; } details.slide > summary { grid-template-columns: 40px minmax(0,1fr) auto; } }
+.items { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.item { border-left: 2px solid var(--brass); padding: 2px 0 2px 12px; min-width: 0; }
+.item b { display: block; font-size: 14.5px; }
+.item p, .item ul { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+.item ul { padding-left: 18px; }
+.tips { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.tip { background: var(--brass-soft); border-radius: var(--r); padding: 12px 14px; min-width: 0; }
+.tip b { display: block; color: var(--brass); font-size: 14px; margin-bottom: 2px; }
+.tip p { margin: 0; font-size: 14px; }
+.formula { display: grid; gap: 4px; font-family: var(--f-mono); font-size: 13.5px; background: var(--sunk); padding: 12px 14px; border-radius: var(--r); overflow-x: auto; }
+.note { font-size: 12.5px; color: var(--muted); margin: 0; }
+.journey { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-weight: 600; font-size: 14px; }
+.journey i { font-style: normal; color: var(--muted); }
+.journey span { padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; }
+.evidence { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 10px; border-top: 1px dashed var(--line); }
+.evidence > span { font-size: 12px; color: var(--muted); font-weight: 600; margin-right: 4px; }
+.chip { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 3px 10px; font-size: 12.5px; cursor: pointer; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.bridge { display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 10px; padding: 14px 0 4px; color: var(--ink); }
+.bridge::before { content: "↓"; font-family: var(--f-display); font-size: 22px; color: var(--accent); line-height: 1.2; text-align: center; }
+.bridge p { margin: 0; max-width: 68ch; font-size: 15px; }
+.bridge p b { color: var(--accent); }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { background: var(--sunk); font-weight: 600; white-space: nowrap; font-size: 12.5px; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+td.n, th.n { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.k { font-weight: 600; white-space: nowrap; }
+tr.total td { background: var(--sunk); font-weight: 600; }
+
+/* timetable */
+.tt td:first-child { font-family: var(--f-mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: var(--sunk); color: var(--muted); }
+.tag.lec { background: var(--brass-soft); color: var(--brass); }
+.tag.ws { background: var(--accent-soft); color: var(--accent); }
+tr.rest td { color: var(--muted); }
+
+/* calculator */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.panel h2 { font-size: 22px; }
+.panel > p { margin: 0; color: var(--muted); max-width: 70ch; }
+.calc input[type=number], .calc input[type=text] { width: 100%; min-width: 58px; padding: 5px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); font-family: var(--f-mono); font-size: 13px; text-align: right; }
+.calc input[type=text] { text-align: left; font-family: var(--f-body); font-weight: 600; min-width: 64px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.kpi { border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 2px; background: var(--surface); }
+.kpi span { font-size: 12.5px; color: var(--muted); }
+.kpi b { font-family: var(--f-mono); font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.kpi small { font-size: 12.5px; }
+.ok { color: var(--good); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid currentColor; white-space: nowrap; font-family: var(--f-body); }
+.settings { display: flex; flex-wrap: wrap; gap: 14px; }
+.settings label { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.settings input { width: 120px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); font-family: var(--f-mono); }
+.sim { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: center; }
+@media (max-width: 700px) { .sim { grid-template-columns: 1fr; } }
+.sim input[type=range] { width: 100%; accent-color: var(--accent); }
+.bars { display: grid; gap: 8px; }
+.bar { display: grid; grid-template-columns: 64px minmax(0,1fr) 92px; gap: 8px; align-items: center; font-size: 13px; }
+.bar div { height: 14px; background: var(--sunk); border-radius: 3px; overflow: hidden; }
+.bar div i { display: block; height: 100%; background: var(--brass); }
+.bar.after div i { background: var(--accent); }
+
+/* worksheets */
+.ws-layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 820px) { .ws-layout { grid-template-columns: 1fr; } }
+.ws-list { display: grid; gap: 4px; position: sticky; top: 64px; }
+@media (max-width: 820px) { .ws-list { position: static; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
+.ws-list button { text-align: left; border: 1px solid transparent; background: transparent; padding: 8px 10px; border-radius: var(--r); cursor: pointer; display: grid; gap: 0; }
+.ws-list button small { color: var(--muted); font-size: 12px; }
+.ws-list button b { font-weight: 600; font-size: 14px; }
+.ws-list button[aria-pressed="true"] { background: var(--surface); border-color: var(--line); }
+.ws-list button[aria-pressed="true"] small { color: var(--accent); }
+.ws-list button .done { font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
+.ws-head { display: grid; gap: 6px; }
+.ws-head h2 { font-size: clamp(22px, 3vw, 28px); }
+.ws-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--muted); font-size: 13.5px; }
+.callout { border: 1px solid var(--line); border-left: 3px solid var(--accent); background: var(--surface); padding: 12px 14px; border-radius: var(--r); font-size: 14px; }
+.callout b { color: var(--accent); }
+.ws-fields { display: flex; flex-wrap: wrap; gap: 12px; }
+.ws-fields label { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.ws-fields input { padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); width: 180px; }
+.wsgrid td { padding: 4px; min-width: 140px; }
+.wsgrid td.k { padding: 8px 10px; min-width: 120px; white-space: normal; }
+.wsgrid textarea { width: 100%; min-height: 64px; resize: vertical; border: 1px solid transparent; background: var(--bg); border-radius: 4px; padding: 6px 8px; font-size: 13.5px; line-height: 1.5; }
+.wsgrid textarea:focus { border-color: var(--accent); background: var(--surface); outline: none; }
+.wsgrid td.fixed { color: var(--muted); padding: 8px 10px; font-size: 13px; }
+.qa { display: grid; gap: 6px; }
+.qa label { font-weight: 600; font-size: 14px; }
+.qa textarea { width: 100%; min-height: 84px; border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; background: var(--surface); resize: vertical; }
+.answer { display: grid; gap: 12px; background: var(--accent-soft); border-radius: var(--r); padding: 16px; }
+.answer h3 { font-size: 18px; color: var(--accent); }
+.answer .tbl { background: var(--surface); }
+.answer .qa-a { display: grid; gap: 2px; } .answer .qa-a b { font-size: 14px; } .answer .qa-a p { margin: 0; font-size: 14px; }
+.answer ul { margin: 0; padding-left: 18px; font-size: 14px; }
+.coach { font-size: 13.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.coach b { color: var(--accent); }
+.status { font-size: 13px; color: var(--good); min-height: 1.2em; }
+
+/* search */
+.search-box { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.search-box input { padding: 12px 14px; font-size: 16px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); min-width: 0; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13.5px; color: var(--muted); align-items: center; }
+.opts label { display: inline-flex; gap: 6px; align-items: center; }
+.opts select { padding: 4px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); max-width: 100%; }
+.engines { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.engine { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); text-decoration: none; color: var(--ink); }
+.engine:hover { border-color: var(--accent); }
+.engine b { font-size: 15px; }
+.engine small { color: var(--muted); font-size: 12px; }
+.engine .go { color: var(--accent); font-size: 12.5px; font-weight: 600; }
+.group-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.group-h h3 { font-size: 17px; }
+.group-h span { color: var(--muted); font-size: 13px; }
+.topics { display: grid; gap: 12px; }
+.topic { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+@media (max-width: 600px) { .topic { grid-template-columns: 1fr; gap: 4px; } }
+.topic > b { font-size: 13px; color: var(--accent); }
+.hits { display: grid; gap: 6px; }
+.hit { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); cursor: pointer; text-align: left; }
+.hit:hover { border-color: var(--accent); }
+.hit small { color: var(--muted); font-size: 12px; }
+.hit p { margin: 0; font-size: 13.5px; color: var(--muted); }
+mark { background: var(--brass-soft); color: var(--ink); padding: 0 2px; border-radius: 2px; }
+.official { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.official a { display: grid; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); text-decoration: none; color: var(--ink); min-width: 0; }
+.official a small { color: var(--muted); font-size: 12px; }
+.official a code { font-family: var(--f-mono); font-size: 11.5px; color: var(--accent); overflow-wrap: anywhere; }
+.how { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; color: var(--muted); max-width: 72ch; }
+.how b { color: var(--ink); }
+footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-block: 18px 30px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1><small>롯데 청년 직무 아카데미 LOTTE LIFT · 유통·리테일 전문가 과정 · 3-5</small>VIP 멤버십 마케팅 랩</h1>
+      <div class="tierline" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+    <p class="lede">교안 43장을 일곱 단계의 흐름으로 다시 엮었습니다. 흐름을 따라 읽고, 케이스 숫자를 직접 계산하고, 워크시트를 채우고, 모든 주장에 대한 근거를 웹 · 뉴스 · 유튜브 · 논문에서 바로 찾을 수 있습니다.</p>
+  </div>
+  <nav class="tabs" aria-label="화면 이동">
+    <div class="wrap">
+      <a href="#flow" data-tab="flow">의미의 흐름</a>
+      <a href="#time" data-tab="time">타임테이블</a>
+      <a href="#calc" data-tab="calc">케이스 · 계산기</a>
+      <a href="#ws" data-tab="ws">실습 워크시트</a>
+      <a href="#search" data-tab="search">근거 찾기</a>
+    </div>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="view" id="v-flow"></section>
+  <section class="view" id="v-time" hidden></section>
+  <section class="view" id="v-calc" hidden></section>
+  <section class="view" id="v-ws" hidden></section>
+  <section class="view" id="v-search" hidden></section>
+</main>
+<footer><div class="wrap">케이스 수치(A백화점)는 교육용 가상 데이터입니다. 벤치마킹 수치는 2026년 9월 확인 기준이며 수시로 바뀌므로 근거 찾기 탭에서 최신 공지를 확인하십시오. 워크시트 입력 내용은 이 브라우저에만 저장됩니다.</div></footer>
+
+<script>
+/* 3-5. VIP 멤버십 마케팅 — 교안(PPT 43장) 내용을 그대로 옮긴 데이터 */
+const COURSE = {
+  title: `VIP 멤버십 마케팅`,
+  program: `롯데 청년 직무 아카데미 LOTTE LIFT · 유통·리테일 전문가 과정 · 03 상품 마케팅 이해 · 3-5`,
+};
+
+const TIMETABLE = [
+  [`09:00~09:10`, `오프닝`, `오늘의 구조 안내 · 실습 흐름`, null],
+  [`09:10~09:40`, `강의`, `정의 · 고객 특성 · 네 가지 핵심 가치`, `p1`],
+  [`09:40~10:10`, `강의`, `고객 생애가치(LTV)의 정의와 계산`, `p1`],
+  [`10:10~10:20`, `휴식`, ``, null],
+  [`10:20~11:00`, `강의`, `MVG · Trinity · Club YP · 3사 비교`, `p2`],
+  [`11:00~11:35`, `실습 ①`, `3사 프로그램 비교와 시사점`, `ws01`],
+  [`11:35~12:00`, `강의`, `등급 운영 전략과 설계 원칙`, `p3`],
+  [`12:00~13:00`, `점심`, ``, null],
+  [`13:00~13:15`, `강의`, `등급 기준선 설계 5단계`, `p3`],
+  [`13:15~13:25`, `안내`, `케이스 데이터 읽기 · 조 편성`, `case`],
+  [`13:25~14:10`, `실습 ②`, `VIP 등급 체계 설계`, `ws02`],
+  [`14:10~14:25`, `강의`, `멤버십 프로그램의 구성 요소`, `p4`],
+  [`14:25~14:40`, `강의`, `혜택 원가와 수익성 · LTV 대조`, `p4`],
+  [`14:40~14:50`, `휴식`, ``, null],
+  [`14:50~15:00`, `강의`, `멤버십 설계의 실무 적용`, `p4`],
+  [`15:00~15:40`, `실습 ③`, `등급별 혜택 패키지 설계`, `ws03`],
+  [`15:40~16:25`, `실습 ④`, `혜택 원가와 수익성 검증`, `ws04`],
+  [`16:25~16:35`, `휴식`, ``, null],
+  [`16:35~16:50`, `강의`, `등급 하락과 이탈 관리 5단계`, `p5`],
+  [`16:50~17:25`, `실습 ⑤`, `이탈 위험 대응 시나리오`, `ws05`],
+  [`17:25~17:40`, `강의`, `재방문 유도 · 개인화 · CX 관리`, `p6`],
+  [`17:40~18:00`, `실습 ⑥`, `개인화 커뮤니케이션 캘린더`, `ws06`],
+];
+
+/* 의미의 흐름: 7개 PART. bridge = 다음 PART로 넘어가는 이유 */
+const PARTS = [
+  {
+    id: `p1`, no: 1, name: `이해`, title: `왜 VIP인가`,
+    question: `누구에게, 왜 더 많이 투자하는가?`,
+    bridge: `VIP의 가치를 LTV라는 숫자로 볼 수 있게 되면, 다음 질문은 "다른 회사는 이 고객을 어떻게 대하는가"입니다.`,
+    slides: [
+      { id: `s3`, page: 3, title: `VIP 마케팅`, sub: `핵심 고객 차별화 전략`,
+        items: [
+          [`VIP 마케팅의 정의`, `구매 빈도와 구매 금액이 높은 고객에게 특별한 서비스를 제공함으로써 재구매를 유도하고 충성도를 높이는 마케팅 접근 방식`],
+          [`경제적 근거`, `상위 고객이 매출의 상당 부분을 차지하며, 기존 고객 유지 비용이 신규 고객 확보 비용보다 낮음`],
+          [`VIP 고객의 가치`, `반복 구매와 긍정적인 입소문 효과를 통해 장기적인 수익성을 보장하는 핵심 자산`],
+        ],
+        q: [`VIP 마케팅 정의`, `파레토 법칙 상위 고객 매출 비중`, `고객 유지 비용 신규 고객 획득 비용 비교`] },
+      { id: `s4`, page: 4, title: `VIP 고객 특성`, sub: `높은 구매력과 맞춤 경험`,
+        groups: [
+          [`구매 특성`, [`일반 고객 대비 높은 구매 규모`, `정기적이고 지속적인 방문`, `특정 브랜드에 대한 높은 신뢰`, `신제품 출시 시 빠른 구매 결정`, `고급 서비스와 상품에 높은 관심`]],
+          [`행동 특성`, [`시간의 가치를 중요하게 생각`, `개인 맞춤 서비스를 기대`, `특별한 경험과 차별화된 혜택에 민감하게 반응`, `브랜드 이미지와 품질을 중시`]],
+          [`충성도 특성`, [`장기적인 거래 관계 유지`, `브랜드 옹호자로서의 역할 수행`, `긍정적인 구전 효과 창출`, `프리미엄 가치에 대한 높은 이해도`]],
+          [`기대 수준`, [`차별화된 우대 서비스 요구`, `즉각적이고 신속한 응대 기대`, `개인화된 커뮤니케이션 선호`, `희소성 있는 혜택과 경험 추구`]],
+        ],
+        q: [`백화점 VIP 고객 특성 소비 행태`, `VIP 고객 구매 패턴 분석`, `명품 소비 VIP 고객 트렌드`] },
+      { id: `s5`, page: 5, title: `VIP 핵심 가치`, sub: `빠른 서비스와 특별 경험 — 네 가지 가치 축`,
+        groups: [
+          [`시간 가치 중심 서비스`, [`대기 시간 최소화와 즉각적인 응대`, `한정된 서비스에 대한 우선 접근권`, `빠른 결제 및 배송 프로세스`, `전담 상담사를 통한 신속한 문제 해결`]],
+          [`공간과 경험`, [`VIP 라운지 및 프라이빗 쇼핑 공간 제공`, `문화 초청 및 프라이빗 행사 참여 기회`, `한정판 상품 구매 기회`, `특별한 브랜드 경험 제공`]],
+          [`개인화 서비스`, [`전담 어드바이저의 맞춤 상담`, `구매 이력 기반의 개인화된 상품 추천`, `생일 및 기념일 맞춤 혜택`, `개인 취향을 반영한 큐레이션 서비스`]],
+          [`희소성과 특별함`, [`일반 고객이 접근할 수 없는 독점 혜택`, `한정된 인원만 참여 가능한 이벤트`, `프리미엄 브랜드와의 협업 기회`, `특별 제작 상품 및 서비스 제공`]],
+        ],
+        note: `이 네 축(시간 · 공간 · 개인화 · 희소성)은 실습 ③ 혜택 패키지 설계의 열(列)이 됩니다.`,
+        q: [`백화점 VIP 라운지 서비스`, `VIP 프라이빗 쇼핑 서비스`, `한정판 VIP 우선 구매 마케팅`] },
+      { id: `s6`, page: 6, title: `고객 생애가치(LTV)`, sub: `고객이 창출하는 총 기대 수익`,
+        items: [
+          [`LTV의 정의와 계산`, `한 고객의 연간 구매금액에 거래기간을 곱하여 산출합니다. 예를 들어 연간 500만 원을 10년간 구매하는 고객의 LTV는 약 5,000만 원입니다.`],
+          [`LTV 중요성`, `고객 한 명을 오래 유지하는 것이 신규 고객을 지속적으로 확보하는 것보다 비용 대비 효과가 높으며, 마케팅 투자 의사결정의 근거가 됩니다.`],
+          [`LTV 향상 방법`, `재구매율 향상, 구매금액 증가, 구매빈도 증가, 고객 이탈 감소, 추천 고객 확보를 통해 고객 생애가치를 극대화할 수 있습니다.`],
+        ],
+        link: [`calc`, `LTV 계산기로 직접 계산해 보기`],
+        q: [`고객 생애가치 LTV 계산 방법`, `customer lifetime value retail`, `LTV 고객생애가치 유통 사례`] },
+    ],
+  },
+  {
+    id: `p2`, no: 2, name: `벤치마크`, title: `국내 3사는 어떻게 하는가`,
+    question: `세 프로그램은 각각 무엇을 위해 존재하는가?`,
+    bridge: `세 회사의 목적이 유지 · 프리미엄 강화 · 미래 육성으로 다르다는 것을 확인했으면, 이제 "우리는 누구를 어느 등급에 둘 것인가"를 정합니다.`,
+    slides: [
+      { id: `s7`, page: 7, title: `롯데백화점 MVG`, sub: `프로그램 분석 — 목적: 고객 유지`,
+        items: [
+          [`구매 실적 기반 등급`, `연간 구매금액에 따른 투명한 등급 결정으로 명확한 기준을 제시합니다.`],
+          [`MVG 전용 라운지`, `프리미엄 쇼핑 환경과 휴식 공간을 제공하여 차별화된 경험을 선사합니다.`],
+          [`발레파킹 서비스`, `시간 가치를 중시하는 VIP 고객을 위한 편의 서비스를 제공합니다.`],
+          [`문화 초청 행사`, `뮤지컬, 공연 등 프리미엄 문화 경험을 제공하여 정서적 만족을 높입니다.`],
+        ],
+        q: [`롯데백화점 MVG 등급 기준`, `롯데백화점 MVG 라운지 혜택`, `롯데백화점 VIP 매출 비중`] },
+      { id: `s8`, page: 8, title: `신세계 Trinity`, sub: `희소성과 맞춤 서비스 강화 — 목적: 프리미엄 강화`,
+        items: [
+          [`최상위 고객 전용`, `초대 기반 선별 멤버십으로 희소성 강조`],
+          [`퍼스널 쇼핑 서비스`, `전담 스타일리스트의 개인화 쇼핑 컨설팅`],
+          [`프라이빗 라운지`, `프라이빗 공간에서 편안한 쇼핑 환경 제공`],
+          [`문화·예술 초청`, `뮤지엄 전시, VIP 갤러리 등 문화 경험`],
+          [`전담 서비스`, `구매 전·중·후 일관된 담당자 서비스`],
+        ],
+        q: [`신세계백화점 트리니티 VIP`, `신세계 트리니티 선정 기준`, `신세계백화점 VIP 퍼스널 쇼퍼`] },
+      { id: `s9`, page: 9, title: `현대 Club YP`, sub: `라이프스타일 중심 디지털 멤버십 — 목적: 미래 VIP 육성`,
+        items: [
+          [`젊은 고객층 대상`, `20~30대 프리미엄층 미래 VIP 조기 확보`],
+          [`문화·라이프스타일 혜택`, `전시, 공연, 카페 등 라이프스타일 제공`],
+          [`디지털 기반 이벤트`, `온라인 예약, 앱 할인, 디지털 쿠폰 운영`],
+          [`모바일 서비스 강화`, `앱 기반 포인트, 혜택, 예약 기능 강화`],
+          [`미래 VIP 육성 전략`, `디지털 세대 선호도 반영한 혜택 설계`],
+        ],
+        q: [`현대백화점 클럽YP`, `현대백화점 2030 VIP 멤버십`, `MZ세대 VIP 영리치 백화점`] },
+      { id: `s10`, page: 10, title: `백화점 VIP 프로그램 비교 분석`, sub: `같은 항목으로 나란히 보기`,
+        items: [
+          [`타겟 고객층`, `롯데 우수 고객, 신세계 최상위 VIP, 현대 젊은 프리미엄층`],
+          [`운영 기준`, `롯데 구매 실적, 신세계 실적·초청, 현대 연령·이용 패턴`],
+          [`핵심 혜택`, `롯데 라운지·문화행사, 신세계 전담 서비스, 현대 디지털 혜택`],
+          [`운영 전략`, `롯데 고객 유지, 신세계 프리미엄 강화, 현대 미래 VIP 육성`],
+          [`전략적 시사점`, `타겟층 특성 파악으로 차별화된 가치와 혜택 제공`],
+        ],
+        link: [`ws01`, `실습 ① 3사 비교 워크시트`],
+        q: [`백화점 3사 VIP 마케팅 경쟁`, `백화점 VIP 매출 비중 기사`, `백화점 VIP 등급 기준 상향`] },
+    ],
+  },
+  {
+    id: `p3`, no: 3, name: `등급 설계`, title: `누구를 어느 등급에 둘 것인가`,
+    question: `"연 1,000만원 이상"이라는 숫자는 어디서 나오는가?`,
+    bridge: `등급(누구에게)을 정했으면, 다음은 등급마다 무엇을 얼마짜리로 줄 것인가입니다.`,
+    slides: [
+      { id: `s13`, page: 13, title: `등급 운영 전략`, sub: `등급 운영으로 충성도 강화`,
+        items: [
+          [`등급 운영의 목적`, `차별화된 혜택으로 장기 거래 관계 유지, 승급 목표 설정으로 구매 욕구 자극, 혜택 유지 조건으로 반복 방문 유도`],
+          [`등급별 특징과 목표`, `Bronze: 첫 구매 유도, Silver: 재구매 유도, Gold: 충성도 강화, VIP: 장기 유지, VVIP: 프리미엄 경험`],
+          [`등급 운영의 효과`, `고객의 자발적인 구매 증가 유도, 브랜드 충성도 및 재방문율 향상, 고객 세분화를 통한 효율적인 마케팅 자원 배분`],
+        ],
+        q: [`멤버십 등급제 설계`, `tiered loyalty program design`, `고객 등급제 효과 연구`] },
+      { id: `s14`, page: 14, title: `등급 운영 시 고려사항과 설계 원칙`, sub: `명확성 · 차별성 · 승급 동기`,
+        items: [
+          [`등급 기준의 명확성`, `연간 구매금액, 구매 횟수, 방문 횟수 등 정량적 기준을 명시하여 고객이 현재 등급과 상위 등급 조건을 명확히 이해하도록 합니다.`],
+          [`혜택의 차별성`, `각 등급별 혜택을 명확히 구분하고, 상위 등급은 하위 등급 혜택을 포함하되 추가 가치를 제공하여 차별화합니다.`],
+          [`승급 동기 부여`, `다음 등급으로의 승급 조건과 기간을 명시하고, 등급 유지에 필요한 최소 구매 조건을 안내하여 지속적인 구매를 유도합니다.`],
+        ],
+        q: [`멤버십 승급 조건 설계`, `goal gradient effect loyalty program`] },
+      { id: `s15`, page: 15, title: `등급 기준선은 어떻게 정하는가`, sub: `감이 아니라 고객 분포에서 나옵니다`,
+        table: {
+          cols: [`설계 순서`, `무엇을 하나`, `판단 기준`],
+          rows: [
+            [`1. 고객 분포 확인`, `연간 구매금액 순으로 전 고객을 정렬`, `상위 몇 %에서 금액이 급격히 갈리는지 확인`],
+            [`2. 등급 수 결정`, `3~5개가 일반적`, `너무 많으면 승급 체감이 없고, 적으면 차별화가 안 됨`],
+            [`3. 인원 비중 설계`, `최상위는 전체의 0.1~1% 수준`, `인원이 많으면 희소성이 사라지고 원가가 급증`],
+            [`4. 기준 금액 확정`, `인원 비중에 해당하는 금액을 기준선으로`, `기억하기 쉬운 숫자로 반올림 (예 · 2,000만원)`],
+            [`5. 유지 조건 설정`, `등급 유지에 필요한 최소 실적`, `너무 빡빡하면 이탈, 너무 느슨하면 등급이 부풀어 오름`],
+          ] },
+        tips: [
+          [`인원 비중이 곧 희소성`, `최상위 등급이 전체의 5%면 그건 더 이상 특별하지 않습니다. 0.1~1%가 일반적인 설계입니다.`],
+          [`승급 사다리를 만드십시오`, `바로 아래 등급에서 조금만 더 쓰면 올라갈 수 있어야 동기가 생깁니다. 간격이 너무 크면 포기합니다.`],
+          [`기준은 바꾸기 어렵습니다`, `한 번 발표한 기준을 올리면 강등되는 고객이 생깁니다. 처음에 보수적으로 잡으십시오.`],
+        ],
+        q: [`백화점 VIP 기준 금액 상향 강등`, `VIP 등급 인원 비중 희소성`] },
+      { id: `case`, page: 16, title: `실습 케이스 · A백화점 등급별 고객 현황`, sub: `연간 기준. 모든 실습은 이 데이터를 근거로 진행합니다.`,
+        caseTable: true,
+        note: `교육용으로 구성한 가상 데이터입니다.`,
+        link: [`ws02`, `실습 ② 등급 체계 설계`],
+        q: [`백화점 등급별 고객 매출 비중`, `백화점 VIP 마케팅 예산`] },
+    ],
+  },
+  {
+    id: `p4`, no: 4, name: `혜택·수익성`, title: `무엇을, 얼마짜리로 줄 것인가`,
+    question: `혜택은 서비스인가, 비용인가?`,
+    bridge: `혜택을 설계하고 비용까지 검증했으면, 이제 그 고객이 떠나지 않게 지키는 일이 남습니다. 혜택을 늘리는 것보다 이탈을 막는 것이 LTV를 키우는 더 빠른 길입니다.`,
+    slides: [
+      { id: `s19`, page: 19, title: `멤버십 프로그램의 구성 요소`, sub: `가입부터 프리미엄 서비스까지`,
+        items: [
+          [`가입 혜택`, `신규 가입 고객을 위한 환영 쿠폰 및 포인트를 제공합니다.`],
+          [`포인트 적립 및 할인 쿠폰`, `포인트 적립과 할인 혜택 제공`],
+          [`생일 혜택 및 개인화 서비스`, `생일 월 특별 쿠폰 및 선물 제공`],
+          [`문화 행사 및 전용 이벤트`, `문화 행사와 VIP 전용 이벤트 제공`],
+          [`VIP 라운지 및 프리미엄 서비스`, `휴식 공간, 쇼핑 컨설턴트 등 제공`],
+        ],
+        q: [`멤버십 프로그램 구성 요소`, `백화점 멤버십 혜택 비교`] },
+      { id: `s20`, page: 20, title: `혜택 원가와 수익성`, sub: `혜택은 서비스가 아니라 비용입니다. 얼마를 써서 얼마를 지키는지 계산해야 합니다.`,
+        formula: [`등급별 LTV = 연간 구매금액 × GP율 × 평균 유지 연수`, `평균 유지 연수 ≒ 1 ÷ 연 이탈률`, `혜택 투자 한도 = LTV × 20~30% (업종과 전략에 따라 조정)`],
+        table: {
+          cols: [`등급`, `연 구매액`, `연 이탈률`, `평균 유지`, `LTV (GP율 30%)`, `연 혜택 원가`, `판정`],
+          rows: [
+            [`VVIP`, `8,000만원`, `5%`, `20년`, `4억 8,000만원`, `400만원`, `여유 있음`],
+            [`VIP`, `2,200만원`, `12%`, `8.3년`, `5,478만원`, `90만원`, `적정`],
+            [`Gold`, `620만원`, `22%`, `4.5년`, `837만원`, `18만원`, `적정`],
+            [`Silver`, `150만원`, `35%`, `2.9년`, `131만원`, `4만원`, `적정`],
+          ] },
+        tips: [[`이탈률이 LTV를 결정합니다`, `Silver의 이탈률 35%를 25%로 낮추면 평균 유지가 2.9년에서 4년으로 늘고 LTV는 131만원에서 180만원이 됩니다. 혜택을 늘리는 것보다 이탈을 막는 것이 LTV를 키우는 더 빠른 길인 경우가 많습니다.`]],
+        note: `수치는 교육용 예시이며 실제 값은 업종·점포·상품 구성에 따라 달라집니다.`,
+        link: [`calc`, `계산기에서 이탈률을 바꿔 보기`],
+        q: [`로열티 프로그램 비용 수익성`, `멤버십 혜택 원가 ROI`, `loyalty program profitability churn`] },
+      { id: `s21`, page: 21, title: `멤버십 프로그램 설계의 실무 적용`, sub: `세분화부터 개선까지`,
+        items: [
+          [`고객 세분화 기준`, `나이, 성별, 구매 패턴 기반 세분화`],
+          [`혜택 차별화 전략`, `등급별 혜택 차등 적용으로 승급 동기 부여`],
+          [`운영 프로세스 설계`, `가입부터 재방문까지 고객 터치포인트 설정`],
+          [`데이터 기반 의사결정`, `구매 데이터 분석으로 최적화된 혜택 설계`],
+          [`고객 만족도 조사 및 개선`, `정기 만족도 조사로 프로그램 지속 개선`],
+        ],
+        link: [`ws03`, `실습 ③ 혜택 패키지 · 실습 ④ 수익성 검증`],
+        q: [`RFM 고객 세분화`, `멤버십 운영 프로세스 고객 터치포인트`] },
+    ],
+  },
+  {
+    id: `p5`, no: 5, name: `유지·이탈`, title: `떠나는 고객을 어떻게 다룰 것인가`,
+    question: `실무의 절반은 내려가는 고객을 다루는 일이다. 언제 개입해야 가장 싼가?`,
+    bridge: `이탈 신호를 잡고 다시 오게 만드는 장치까지 정했으면, 그 장치를 고객 한 명 한 명에게 맞게 전하는 방법, 즉 개인화와 고객 경험이 필요합니다.`,
+    slides: [
+      { id: `s26`, page: 26, title: `등급 하락과 이탈 관리`, sub: `교안은 올라가는 이야기만 합니다. 실무의 절반은 내려가는 고객을 다루는 일입니다.`,
+        table: {
+          cols: [`신호 단계`, `무엇이 보이나`, `대응 시점`, `대응 방법`],
+          rows: [
+            [`1. 빈도 감소`, `방문 주기가 평소의 1.5배로 늘어남`, `가장 이른 신호 · 즉시`, `관심 카테고리 신상품 알림 · 가벼운 접촉`],
+            [`2. 금액 감소`, `객단가는 유지되나 구매 건수가 줄어듦`, `빈도 감소 후 1~2개월`, `전담 담당자 연락 · 불편 사항 청취`],
+            [`3. 등급 유지선 미달 예상`, `연말까지 기준 미달이 예상됨`, `분기 단위 예측 · 3개월 전`, `잔여 실적 안내 · 승급·유지 유도 제안`],
+            [`4. 등급 하락 확정`, `기준에 미달해 등급이 내려감`, `확정 전 사전 안내 필수`, `정중한 사전 고지 · 복귀 조건 안내`],
+            [`5. 완전 이탈`, `1년 이상 미방문`, `회복 비용 대비 효과 검토`, `선별적 접촉 · 무리한 회복 시도 지양`],
+          ] },
+        tips: [
+          [`하락은 통보가 아니라 예고`, `등급이 내려간 뒤 알리면 고객은 모욕감을 느낍니다. 미리 알리고 기회를 주는 것이 원칙입니다.`],
+          [`가장 이른 신호는 빈도`, `금액은 나중에 줄어듭니다. 방문 주기가 늘어나는 시점이 개입할 수 있는 마지막 순간입니다.`],
+          [`모두를 붙잡을 수는 없습니다`, `회복 비용이 LTV를 넘으면 놓아주는 것도 판단입니다. 선별이 곧 전략입니다.`],
+        ],
+        link: [`ws05`, `실습 ⑤ 이탈 위험 대응 시나리오`],
+        q: [`고객 이탈 징후 조기 감지`, `churn prediction early warning retail`, `멤버십 등급 강등 고객 불만`] },
+      { id: `s27`, page: 27, title: `고객 유지 전략의 개념과 방법`, sub: `유지 비용 5분의 1, 구매 가능성 3배 이상`,
+        items: [
+          [`경제적 가치`, `유지 비용 5분의 1, 구매 가능성 3배 이상`],
+          [`정기 쿠폰 제공`, `월별, 계절별 정기 할인으로 재방문 유도`],
+          [`생일 이벤트 및 맞춤 추천`, `생일 축하 메시지와 맞춤 상품 추천 제공`],
+          [`감사 이벤트`, `구매 금액 도달 시 감사 선물로 충성도 강화`],
+          [`구매 후 관리`, `배송 후 만족도 조사 및 사후 서비스 제공`],
+        ],
+        q: [`고객 유지 비용 신규 고객 5배`, `customer retention cost acquisition 5 times`, `고객 유지율 5% 증가 이익 25%`] },
+      { id: `s28`, page: 28, title: `재방문 유도 전략`, sub: `3단계`,
+        items: [
+          [`Step 1 · 시즌행사`, `시즌 프로모션, 포인트 적립 / 수량 제한으로 긴급성 유도`],
+          [`Step 2 · 실시간 알림`, `신상품 알림, 맞춤 쿠폰 / 문자·앱 즉각 소통`],
+          [`Step 3 · 채널 최적화`, `선호 채널 파악 / 앱·문자·이메일·SNS 최적화`],
+        ],
+        q: [`재방문 유도 마케팅 전략`, `옴니채널 고객 커뮤니케이션 최적화`] },
+      { id: `s29`, page: 29, title: `VIP 고객 서비스 벤치마킹 사례`, sub: `잘 되는 멤버십은 할인보다 '다시 올 이유'를 설계합니다.`,
+        table: {
+          cols: [`사례`, `핵심 서비스 장치`, `재방문을 만드는 원리`, `A백화점 적용 포인트`],
+          rows: [
+            [`노드스트롬 · 미국 백화점 · Nordy Club`, `연 구매액 기준 4단계 (Ambassador 5,000달러 · Icon 15,000달러). 상위 등급은 연례 세일 선입장, 스타일리스트 방문 서비스, 전용 라운지 이용`, `포인트 2배 적립일을 고객이 직접 고르게 해, 방문 날짜를 고객 스스로 정하도록 만듭니다.`, `시즌행사 등급별 입장 시차 + 고객 선택형 적립일 연 2회`],
+            [`세포라 · 미국 뷰티 · Beauty Insider`, `3단계 (VIB 350달러 · Rouge 1,000달러). Rouge는 전체 회원의 약 6%. 세일 최우선 접근, 전용 이벤트, 무료 배송`, `앱에 '등급 유지까지 남은 금액'을 상시 표시합니다. 목표가 눈에 보이면 다시 옵니다.`, `앱·영수증에 "유지까지 ○○만원" 표시 (WS 05 3단계와 연결)`],
+            [`스타벅스 · 미국 커피 · Rewards (2026 개편)`, `2026년 3월 Green · Gold · Reserve 3단계 도입. 등급이 오를수록 적립률 1.0 → 1.2 → 1.7배, 추가 더블스타 데이 확대`, `자주 올수록 유리해지는 구조입니다. 다만 기존 회원이 새 등급명을 강등으로 오해하는 반발도 있었습니다.`, `등급 개편 시 명칭 · 전환 안내를 먼저 설계`],
+            [`올리브영 · 국내 H&B · 올리브 멤버스`, `직전 6개월 구매액 기준 5단계 (골드 100만원 이상). 매월 25~27일 올리브 데이, 골드 · 블랙 대상 멤버스 라운지 · 올리브 클래스`, `매월 고정된 날짜와 월 단위 체험 혜택으로 '달마다 올 이유'를 만듭니다. 승급 반영 주기도 1개월로 단축했습니다.`, `월 1회 소규모 클래스 · 라운지 동반 초대, 승급 반영 주기 단축`],
+            [`리츠칼튼 · 글로벌 호텔 · 서비스 운영`, `직원이 상사 승인 없이 고객 1인당 최대 2,000달러를 문제 해결에 쓸 수 있는 재량권. 고객 선호를 기록해 다음 방문에 반영`, `불만은 그 자리에서 풀고, 다음 방문에서 '기억해 주는' 경험을 줍니다.`, `담당 사원 현장 재량 예산 + VIP 취향 카드 (선호 브랜드 · 사이즈 · 음료)`],
+          ] },
+        note: `각 사 공식 발표 · 언론 보도 기준 (2026년 9월 확인). 기준 금액과 혜택은 수시로 바뀌므로 최신 공지를 확인하십시오. 리츠칼튼 재량권은 널리 알려진 운영 원칙으로 소개합니다.`,
+        q: [`Nordstrom Nordy Club tiers`, `Sephora Beauty Insider Rouge tier`, `Starbucks Rewards 2026 tiers Green Gold Reserve`, `올리브영 올리브 멤버스 등급`, `Ritz-Carlton $2000 employee empowerment`] },
+      { id: `s30`, page: 30, title: `사례에서 뽑은 재방문 유도 장치 5가지`, sub: `사례를 그대로 옮기지 말고, 작동 원리를 A백화점 케이스 데이터에 맞게 바꿔 적용합니다.`,
+        table: {
+          cols: [`재방문 장치`, `대표 사례`, `A백화점 적용 아이디어`, `설계 시 주의점`],
+          rows: [
+            [`1. 진행 상황의 가시화`, `세포라 · 스타벅스 앱의 등급 진행 트래커`, `Gold 3,200명에게 앱에서 '유지까지 남은 금액'을 매월 표시`, `압박이 아니라 '얼마 남지 않았다'는 톤으로`],
+            [`2. 시간 우선권`, `노드스트롬 연례 세일 등급별 선입장`, `시즌행사 VVIP 3일 · VIP 2일 · Gold 1일 먼저 입장`, `우선권은 재고가 받쳐 줘야 불만이 안 됨`],
+            [`3. 고정 방문일`, `올리브영 매월 25~27일 올리브 데이`, `매월 셋째 주 'Gold 위크' — 라운지 개방 + 추가 적립`, `할인만 걸면 그 날만 오는 고객이 됨`],
+            [`4. 경험형 월간 혜택`, `올리브영 올리브 클래스 · 스타벅스 Reserve 경험`, `월 1회 소규모 클래스 (향수 · 와인 · 리빙), Silver 상위층 체험 초대`, `인원을 한정해 희소성을 지키고 참석 후 연락까지 설계`],
+            [`5. 기억해 주는 응대`, `리츠칼튼 고객 선호 기록 · 현장 재량권`, `VIP 취향 카드 + 담당 사원 현장 보상 재량`, `고객이 예상할 수 있는 범위의 개인화만`],
+          ] },
+        tips: [
+          [`할인은 오늘, 경험은 다음 방문`, `쿠폰으로 부른 방문은 쿠폰이 끝나면 함께 끝납니다. 다음에 올 이유를 남기십시오.`],
+          [`개편은 강등처럼 보이기 쉽습니다`, `스타벅스 2026 개편 때 기존 회원이 새 등급명을 강등으로 받아들였습니다. 명칭과 전환 안내가 먼저입니다.`],
+          [`우선권에는 재고가 필요합니다`, `먼저 들어왔는데 물건이 없으면 특권이 불만으로 바뀝니다. 물량 계획도 서비스입니다.`],
+        ],
+        link: [`wsr`, `추가 실습 · 재방문 유도 고객 전략`],
+        q: [`Nordstrom anniversary sale early access sold out cancelled 2019`, `goal gradient progress tracker loyalty app`, `올리브영 올리브데이 효과`] },
+    ],
+  },
+  {
+    id: `p6`, no: 6, name: `개인화·CX`, title: `고객 한 명에게 어떻게 말할 것인가`,
+    question: `1년 동안 언제, 어떤 이유로 연락할 것인가?`,
+    bridge: `개인화는 강력하지만 차별화는 차별과 종이 한 장 차이입니다. 마지막으로 리스크와 균형을 점검하고 전체를 하나의 기획안으로 묶습니다.`,
+    slides: [
+      { id: `s33`, page: 33, title: `개인화 서비스 전략`, sub: `구매 이력 기반 · 생일 및 AI 추천 · 개인 쇼핑 어드바이저`,
+        items: [
+          [`구매 이력 기반 추천 및 관심 브랜드 안내`, `과거 구매 상품과 유사한 신상품을 추천하고, 고객이 자주 방문하는 브랜드의 신상품을 우선 안내합니다.`],
+          [`생일 쿠폰 발송 및 AI 상품 추천`, `고객의 생일 월에 맞춤형 할인 혜택을 제공하고, 머신러닝 기반 예측 모델로 구매 가능성 높은 상품을 추천합니다.`],
+          [`전담 스태프의 맞춤 상담 제공`, `전담 스태프가 고객의 스타일과 선호도를 파악하여 개인 맞춤 상담을 제공하고, 고객 만족도와 구매 전환율을 향상시킵니다.`],
+        ],
+        q: [`리테일 개인화 추천 AI 사례`, `퍼스널 쇼퍼 서비스 백화점`, `personalization retail McKinsey`] },
+      { id: `s34`, page: 34, title: `고객경험(CX) 관리전략`, sub: `접점별 일관된 가치 제공`,
+        items: [
+          [`CX 정의 · 고객 경험의 통합적 관리`, `고객이 브랜드와 상호작용하는 모든 과정(인식, 방문, 상담, 구매, 혜택 제공, 재방문, 추천)을 통합적으로 관리하는 것입니다.`],
+          [`주요 터치포인트 · 7가지 핵심 고객 접점`, `SNS 광고, 홈페이지, 앱, 매장 방문, 직원 응대, 결제, 사후관리 등 고객 여정의 모든 단계에서 접점을 관리합니다.`],
+          [`경험 설계 흐름 · 선순환 구조 구축`, `인식 → 방문 → 상담 → 구매 → 혜택 → 재방문 → 추천으로 이어지는 선순환 구조를 구축하여 지속적인 고객 관계를 형성합니다.`],
+        ],
+        journey: [`인식`, `방문`, `상담`, `구매`, `혜택`, `재방문`, `추천`],
+        link: [`ws06`, `실습 ⑥ 개인화 커뮤니케이션 캘린더`],
+        q: [`고객 여정 지도 customer journey map 리테일`, `고객경험 CX 관리 사례`] },
+    ],
+  },
+  {
+    id: `p7`, no: 7, name: `균형·실행`, title: `무엇이 달라지는가`,
+    question: `상위 고객은 대접받는다고, 하위 고객은 올라가고 싶다고 느끼는가?`,
+    bridge: null,
+    slides: [
+      { id: `s39`, page: 39, title: `VIP 마케팅의 리스크와 균형`, sub: `차별화는 차별과 종이 한 장 차이입니다. 선을 알고 설계해야 합니다.`,
+        table: {
+          cols: [`리스크`, `어떻게 생기나`, `설계 단계에서의 대응`],
+          rows: [
+            [`형평성 논란`, `일반 고객이 배제되었다고 느낄 때`, `혜택의 격차보다 등급 상승 경로의 공정성을 강조`],
+            [`과도한 혜택 의존`, `혜택이 없으면 오지 않는 고객이 늘어남`, `가격 혜택 비중을 줄이고 경험·서비스 비중을 늘림`],
+            [`원가 부담 누적`, `혜택은 늘리기 쉽고 줄이기 어려움`, `도입 전 원가 시뮬레이션 · 축소 시나리오 함께 설계`],
+            [`개인정보 문제`, `구매 이력 기반 개인화 과정에서 발생`, `동의 범위 내 활용 · 예측 가능한 수준의 개인화`],
+            [`등급 하락 불만`, `사전 안내 없이 등급이 내려갈 때`, `사전 고지 · 유예 기간 · 복귀 조건 명시`],
+          ] },
+        tips: [[`좋은 VIP 프로그램의 조건`, `상위 고객은 대접받는다고 느끼고, 하위 고객은 올라가고 싶다고 느껴야 합니다. 하위 고객이 소외감만 느낀다면 그 프로그램은 전체 고객 기반을 갉아먹고 있는 것입니다.`]],
+        note: `교육 목적의 개괄적 안내이며 법률 자문이 아닙니다. 실제 운영은 관련 법령과 사내 규정 검토를 거쳐야 합니다.`,
+        q: [`VIP 마케팅 형평성 논란`, `개인정보보호법 마케팅 정보 수신 동의`, `광고성 정보 전송 야간 21시 08시 정보통신망법`] },
+      { id: `s40`, page: 40, title: `VIP 운영 실무 방안`, sub: `세분화, 데이터 분석, 모니터링을 통합하여 효과적인 VIP 프로그램 운영 체계를 구축합니다.`,
+        items: [
+          [`고객 세분화`, `구매 금액·빈도·카테고리로 고객 세분화하여 최적화된 혜택 설계`],
+          [`데이터 기반 의사결정`, `CRM 시스템을 통해 고객 데이터를 수집·분석하여 프로그램 개선 방향을 도출합니다.`],
+          [`지속적 모니터링`, `만족도 조사·이탈 분석·재구매율 추적으로 지속적 최적화`],
+          [`통합 운영 체계`, `세분화, 데이터 분석, 모니터링을 통합하여 효과적인 VIP 프로그램 운영 체계를 구축합니다.`],
+        ],
+        link: [`ws07`, `실습 ⑦ VIP 마케팅 전략 기획안`],
+        q: [`CRM 시스템 VIP 운영 사례`, `백화점 CRM 데이터 분석`] },
+    ],
+  },
+];
+
+/* 케이스 데이터 (슬라이드 16) */
+const CASE = {
+  rows: [
+    // 등급, 인원, 1인 연 구매액(만원), 등급 매출(억), 매출 비중, 연 이탈률, 1인 연 혜택 원가(만원)
+    [`VVIP`, 120, 8000, 96, `11.5%`, 5, 400],
+    [`VIP`, 850, 2200, 187, `22.3%`, 12, 90],
+    [`Gold`, 3200, 620, 198, `23.7%`, 22, 18],
+    [`Silver`, 12000, 150, 180, `21.5%`, 35, 4],
+    [`일반`, 68000, 26, 177, `21.1%`, null, 0.5],
+  ],
+  total: [`합계`, `84,170명`, `—`, `838억원`, `100%`, `—`, `총 26.4억원`],
+  extra: [
+    [`평균 GP율`, `30%`],
+    [`연간 VIP 마케팅 예산`, `30억원 (혜택 원가 26.4억 + 운영비 3.6억)`],
+    [`작년 등급 이동`, `Silver → Gold 승급 420명 · Gold → Silver 하락 610명`],
+    [`VIP 라운지`, `본점 1개소 · 연 운영비 4억원 (위 혜택 원가에 포함)`],
+  ],
+};
+
+/* 실습 워크시트. tables = 학습자가 채우는 표, answer = 예시답안 */
+const WS = [
+  {
+    id: `ws01`, part: `p2`, label: `실습 ①`, title: `3사 VIP 프로그램 비교와 시사점`, time: `35분`,
+    goal: `세 프로그램을 같은 항목으로 비교하고, 우리가 가져갈 것을 정하십시오.`,
+    hint: `세 프로그램의 목적이 서로 다릅니다. 유지인지, 프리미엄 강화인지, 미래 고객 육성인지 구분해서 보십시오.`,
+    tables: [
+      { cols: [`비교 항목`, `롯데 MVG`, `신세계 Trinity`, `현대 Club YP`, `우리가 가져갈 것`], rows: [`타깃 고객층`, `선정 기준`, `핵심 혜택`, `차별화 포인트`, `운영 전략의 목적`] },
+      { cols: [`시사점`, `도출한 방향`, `어느 사례에서 나왔나`], rows: [`1`, `2`, `3`] },
+    ],
+    answer: {
+      tables: [
+        { cols: [`비교 항목`, `롯데 MVG`, `신세계 Trinity`, `현대 Club YP`, `우리가 가져갈 것`], rows: [
+          [`타깃 고객층`, `연간 구매액 상위 고객을 폭넓게 포괄. 등급이 여러 단계로 나뉨`, `극소수 최상위 고객만. 인원 자체를 한정`, `젊은 연령대의 성장 가능 고객. 현재 금액보다 미래 가치를 봄`, `우리는 세 층을 다 가져야 합니다. 다만 이번 과제의 초점은 Gold 붕괴이므로 '성장 가능 고객' 관점을 중심에 둡니다.`],
+          [`선정 기준`, `연간 구매금액 중심의 단계별 기준`, `금액 + 초청. 돈만으로는 들어갈 수 없음`, `연령 조건 + 구매금액. 나이가 기준에 포함됨`, `금액 단일 기준에 '성장률'을 보조 지표로 더합니다. 전년 대비 구매액 증가율이 높은 고객을 승급 후보로 별도 관리합니다.`],
+          [`핵심 혜택`, `라운지 · 주차 · 발레파킹 등 방문 편의 중심`, `전담 응대 · 초청 행사 등 극도의 개인화`, `체험 · 콘텐츠 · 문화 프로그램 중심`, `등급이 낮을수록 '편의', 높을수록 '경험과 관계'로 축을 옮깁니다.`],
+          [`차별화 포인트`, `규모와 접근성. 가장 많은 고객이 체감할 수 있음`, `희소성 그 자체가 혜택. 인원 제한이 브랜드가 됨`, `미래 고객을 미리 확보한다는 시간 축의 차별화`, `Trinity의 '인원 한정'을 최상위에만 적용하고, Club YP의 '육성' 개념을 Silver→Gold 구간에 적용합니다.`],
+          [`운영 전략의 목적`, `이탈 방지와 방문 빈도 유지`, `프리미엄 이미지 강화`, `미래 고객 육성과 세대 교체 대비`, `우리의 1순위 목적은 '육성'입니다. 케이스상 지켜야 할 상위층보다 끌어올려야 할 중간층이 더 큰 기회이기 때문입니다.`],
+        ] },
+        { cols: [`시사점`, `도출한 방향`, `어느 사례에서 나왔나`], rows: [
+          [`1`, `최상위 등급은 금액이 아니라 '인원'으로 관리한다. 150명으로 상한을 두어 희소성을 지킨다.`, `신세계 Trinity의 인원 한정 구조`],
+          [`2`, `Silver→Gold 구간에 승급 사다리를 놓는다. 기준 금액을 낮추고 승급 과정 자체를 혜택으로 만든다.`, `현대 Club YP의 미래 고객 육성 관점`],
+          [`3`, `하위 등급에는 방문 편의를, 상위 등급에는 관계와 경험을 준다. 가격 할인은 등급이 올라갈수록 비중을 줄인다.`, `롯데 MVG(편의)와 Trinity(관계)의 대비`],
+        ] },
+      ],
+      notes: [`실제 3사 프로그램의 기준과 혜택은 해마다 바뀝니다. '구조의 차이'만 다루고, 구체적 수치는 각 사 최신 공지를 확인하십시오.`],
+      coach: `세 프로그램의 목적이 서로 다르다는 것이 핵심입니다. 유지(MVG) · 프리미엄 강화(Trinity) · 미래 고객 육성(Club YP). '우리가 가져갈 것' 칸을 비워 두면 실습 ②로 이어지지 않으니 반드시 채우십시오.`,
+    },
+  },
+  {
+    id: `ws02`, part: `p3`, label: `실습 ②`, title: `VIP 등급 체계 설계`, time: `45분`,
+    goal: `케이스 데이터를 근거로 등급 수 · 인원 비중 · 기준 금액을 정하십시오.`,
+    hint: `Silver 12,000명 중 일부를 Gold로 올리는 것이 VVIP 120명을 지키는 것보다 매출 효과가 클 수도 있습니다. 어느 쪽에 사다리를 놓겠습니까?`,
+    tables: [
+      { cols: [`등급명`, `기준 금액 (연간)`, `목표 인원`, `전체 대비 비중`, `유지 조건`, `이 기준으로 정한 이유`], rows: [``, ``, ``, ``, ``] },
+    ],
+    questions: [`최상위 등급이 전체의 몇 %인가 · 희소성이 유지되는가`, `바로 아래 등급에서 올라가려면 얼마를 더 써야 하는가`, `현재 등급 인원과 비교해 크게 달라지는 등급이 있는가`],
+    answer: {
+      tables: [
+        { cols: [`등급명`, `기준 금액 (연간)`, `목표 인원 (현재)`, `전체 대비 비중`, `유지 조건`, `이 기준으로 정한 이유`], rows: [
+          [`VVIP`, `5,000만원 이상 + 초청 심사`, `150명 (120명)`, `0.18%`, `2년 연속 미달 시 하락, 1년 유예 부여`, `금액이 아니라 인원으로 상한을 둡니다. 전체의 0.1~1% 범위를 지켜야 희소성이 유지됩니다. 30명 증원은 VIP 상위층의 목표가 되게 하려는 것입니다.`],
+          [`VIP`, `1,500만원 이상`, `950명 (850명)`, `1.13%`, `기준의 80% 이상이면 1년 유예`, `상위 2등급 합계를 1.3% 선으로 유지합니다. 유예 조건을 둔 이유는 한 해 사정으로 떨어지는 고객을 붙잡기 위해서입니다.`],
+          [`Gold`, `400만원 이상 (기존 620만원)`, `4,200명 (3,200명)`, `4.99%`, `연간 기준 충족, 미달 시 3개월 전 예고`, `이번 설계의 핵심입니다. 기준을 620만원에서 400만원으로 낮춰 Silver 상위층 1,000명을 끌어올립니다. 승급 시 1인 연 구매액 +470만원 → 총 +47억원입니다.`],
+          [`Silver`, `100만원 이상`, `12,500명 (12,000명)`, `14.85%`, `연 100만원 미달 시 자동 하락 (유예 없음)`, `Gold와의 격차를 470만원에서 300만원으로 좁혔습니다. 사다리 한 칸이 낮아야 오릅니다.`],
+          [`일반`, `100만원 미만`, `66,370명 (68,000명)`, `78.85%`, `—`, `관리 비용을 들이지 않고 자동화 채널만 유지합니다. Silver 승급 후보를 여기서 찾습니다.`],
+        ] },
+      ],
+      notes: [
+        `설계 순서 · 금액이 아니라 인원 비중부터 정합니다. ① 고객 분포 확인 → ② 등급 수 결정 → ③ 인원 비중 설계 → ④ 기준 금액 확정 → ⑤ 유지 조건 설정. 금액을 먼저 정하면 인원이 통제되지 않습니다.`,
+        `인원 합계는 84,170명으로 케이스와 같아야 합니다. 합계가 맞지 않으면 어느 등급에서 인원이 새는지 찾으십시오.`,
+        `등급 수는 5개를 유지했습니다. 6개 이상으로 늘리면 등급 간 차이를 혜택으로 표현할 수 없고, 4개 이하면 승급 사다리 간격이 너무 벌어집니다.`,
+      ],
+      coach: `현재 등급을 그대로 베끼는 조가 반드시 나옵니다. '지금 구조에 문제가 없습니까'를 물으십시오. Gold 이탈이 답입니다. 최상위 인원을 크게 잡는 조에는 희소성을 물으십시오.`,
+    },
+  },
+  {
+    id: `ws03`, part: `p4`, label: `실습 ③`, title: `등급별 혜택 패키지 설계`, time: `40분`,
+    goal: `네 가지 가치 축(시간 · 공간 · 개인화 · 희소성)으로 등급마다 다르게 구성하십시오.`,
+    hint: `설계 원칙 · 상위 등급은 하위 등급 혜택을 포함하되 추가 가치를 더합니다. 가격 혜택만 늘리면 혜택이 없을 때 오지 않는 고객이 됩니다. 경험과 서비스의 비중을 높이십시오.`,
+    tables: [
+      { cols: [`등급`, `시간 가치`, `공간 · 경험`, `개인화`, `희소성`, `가격 혜택`], rows: [``, ``, ``, ``, ``] },
+    ],
+    questions: [`우리 프로그램에서 돈으로 살 수 없는 혜택 한 가지`],
+    answer: {
+      tables: [
+        { cols: [`등급`, `시간 가치`, `공간 · 경험`, `개인화`, `희소성`, `가격 혜택`], rows: [
+          [`VVIP`, `예약 없이 즉시 응대 · 신상품 우선 구매권 (일반 공개 3일 전)`, `본점 프라이빗 룸 · 연 2회 초청 문화행사 · 해외 브랜드 쇼룸 초청`, `전담 어드바이저 1:1 · 취향 기록 기반 사전 큐레이션 · 가족 단위 응대`, `인원 150명 한정 · 초청 심사로만 진입 · 비공개 시즌 프리뷰`, `포인트 적립률 최고 구간 (할인 쿠폰은 제공하지 않음)`],
+          [`VIP`, `우선 예약·우선 계산 · 주차 대기 없음`, `VIP 라운지 상시 이용 · 연 1회 초청 행사`, `담당 판매사원 지정 · 관심 브랜드 신상품 알림`, `한정 수량 상품 우선 안내`, `포인트 적립률 상향 · 생일 월 사은 혜택`],
+          [`Gold`, `우선 예약 · 주차 3시간 무료`, `라운지 월 4회 이용 (승급 체험 기회)`, `관심 카테고리 기반 알림`, `시즌 한정 사은품`, `정기 할인 쿠폰 · 5% 추가 적립`],
+          [`Silver`, `주차 2시간 무료`, `라운지 연 2회 체험권 (Gold 혜택 미리 보기)`, `앱 기반 맞춤 알림`, `—`, `정기 할인 쿠폰 · 기본 적립`],
+          [`일반`, `—`, `—`, `앱 푸시 자동 발송`, `—`, `신규·휴면 대상 쿠폰`],
+        ] },
+      ],
+      qa: [[`우리 프로그램에서 돈으로 살 수 없는 혜택 한 가지`, `"VVIP 초청 심사" · 아무리 많이 써도 기존 VVIP의 추천과 심사를 거치지 않으면 들어올 수 없게 합니다. 금액으로 살 수 없는 유일한 문을 하나 남겨 두는 것이 프로그램 전체의 격을 만듭니다.`]],
+      coach: `네 축 중 '희소성' 칸이 가장 자주 비어 있습니다. 인원 한정, 초청제, 비공개 프리뷰 같은 것이 여기 들어갑니다. 하위 등급은 비어 있어도 정상입니다.`,
+    },
+  },
+  {
+    id: `ws04`, part: `p4`, label: `실습 ④`, title: `혜택 원가와 수익성 검증`, time: `45분`,
+    goal: `설계한 혜택이 얼마짜리인지 계산하고 LTV와 대조하십시오.`,
+    hint: `계산식 · 평균 유지 연수 ≒ 1 ÷ 연 이탈률 · LTV = 연 구매금액 × GP율(30%) × 평균 유지 연수 · 혜택 투자 한도 = LTV × 20~30%. 계산기 탭에서 바로 계산할 수 있습니다.`,
+    tables: [
+      { cols: [`등급`, `1인 연 혜택 원가`, `인원`, `등급 총 원가`, `1인 LTV`, `혜택 ÷ LTV`, `판정 (적정/과다/부족)`], rows: [``, ``, ``, ``, ``] },
+    ],
+    questions: [`예산을 초과했다면 어느 등급의 혜택부터 조정할 것인가 · 그 이유`],
+    answer: {
+      tables: [
+        { cols: [`등급`, `1인 연 혜택 원가`, `인원`, `등급 총 원가`, `1인 LTV`, `혜택 ÷ LTV`, `투자 한도 (LTV×20%)`, `판정`, `판정 근거`], rows: [
+          [`VVIP`, `430만원`, `150명`, `6.45억원`, `4억 8,000만원`, `0.90%`, `9,600만원`, `부족`, `한도의 1/22 수준입니다. 이론상으로는 훨씬 더 쓸 수 있습니다.`],
+          [`VIP`, `88만원`, `950명`, `8.36억원`, `5,478만원`, `1.61%`, `1,096만원`, `부족`, `한도 대비 8%. 승급 대기층이므로 여기에 더 쓰는 것이 합리적입니다.`],
+          [`Gold`, `18만원`, `4,200명`, `7.56억원`, `837만원`, `2.15%`, `167만원`, `적정`, `인원이 늘어 총액이 커졌습니다. 1인 원가는 유지했습니다.`],
+          [`Silver`, `2.5만원`, `12,500명`, `3.12억원`, `131만원`, `1.91%`, `26만원`, `적정`, `현행 4만원에서 낮췄습니다. 예산 제약 때문이며 승급 체험권으로 보완합니다.`],
+          [`일반`, `0.13만원`, `66,370명`, `0.86억원`, `약 15만원`, `0.87%`, `3만원`, `적정`, `자동화 채널만 유지합니다.`],
+          [`합계`, `—`, `84,170명`, `26.36억원`, `—`, `—`, `—`, `예산 이내`, `혜택 26.36억 + 운영비 3.6억 = 29.96억 ≤ 예산 30억`],
+        ] },
+      ],
+      qa: [[`예산을 초과했다면 어느 등급의 혜택부터 조정할 것인가 · 그 이유`, `Silver부터 조정합니다. 인원이 12,500명으로 가장 많아 1인당 1만원만 움직여도 1.25억원이 바뀌기 때문입니다. 단가가 아니라 인원 × 단가로 보아야 합니다. 다만 금액을 깎는 대신 성격을 바꿉니다. 현금성 쿠폰(원가 100%)을 라운지 체험권(실제 원가는 낮고 체감 가치는 높음)으로 대체하면 원가는 줄고 승급 동기는 오히려 커집니다. VVIP 혜택은 마지막에 건드립니다. 총액이 6.45억으로 커 보이지만 150명이 만드는 매출이 120억입니다. 여기서 1명이 이탈하면 절감액보다 손실이 큽니다.`]],
+      coach: `계산 순서를 반드시 지키십시오. ①유지연수 ②LTV ③혜택÷LTV ④총원가 ⑤예산 대조. 인원을 먼저 곱해 총원가부터 구하면 등급 간 비율 비교를 못 합니다.`,
+    },
+  },
+  {
+    id: `wsr`, part: `p5`, label: `추가 실습`, title: `재방문 유도 고객 전략`, time: `25분`,
+    goal: `고객 유형마다 오지 않는 이유를 먼저 적고, 그 이유를 없애는 방문 트리거를 설계하십시오.`,
+    hint: `케이스 참고 · 연 이탈률은 Gold 22%, Silver 35%입니다. 인원 × 이탈률로 가장 많이 새는 곳을 찾고, 그곳에 트리거를 먼저 거십시오. 재방문 3단계(시즌행사 · 실시간 알림 · 채널 최적화)와 벤치마킹 장치 5가지를 근거로 작성합니다.`,
+    tables: [
+      { cols: [`대상 고객`, `오지 않는 이유 (가설)`, `방문 트리거`, `채널 · 시점`, `참고 사례`, `성과 지표`], rows: [`1. Gold 신규 승급`, `2. Silver 상위 승급 후보`, `3. 방문 주기가 늘어난 VIP`, `4. 혜택 미사용 고객`, `5. 시즌 행사 때만 오는 고객`] },
+    ],
+    questions: [`재방문 3단계 중 가장 먼저 손볼 단계와 이유`, `재방문 성과를 무엇으로 측정할 것인가 · 지표와 목표값`],
+    answer: {
+      tables: [
+        { cols: [`대상 고객`, `오지 않는 이유 (가설)`, `방문 트리거`, `채널 · 시점`, `참고 사례`, `성과 지표`], rows: [
+          [`1. Gold 신규 승급 (승급 후 90일)`, `무엇이 달라졌는지 몰라 혜택을 쓰지 않음`, `승급 7일 내 '첫 라운지 방문' 초대 (동반 1인) + 앱에 유지까지 남은 금액 표시`, `담당 사원 전화 + 앱 · 승급 후 7일 이내`, `세포라 진행 트래커 · 올리브영 라운지 동반`, `90일 재방문율 85% · 혜택 첫 사용률 70%`],
+          [`2. Silver 승급 후보 (연 300만원 이상)`, `Gold까지 격차가 커 보여 포기함`, `Gold 미리 보기 — 라운지 체험권 연 2회 + 고객이 고르는 포인트 2배 적립일 연 2회`, `앱 푸시 · 분기 1회 · 시즌행사 2주 전`, `노드스트롬 선택형 적립일 · 올리브영 승급 주기 단축`, `체험권 사용자 Gold 승급률 · 분기 방문 횟수`],
+          [`3. 주기 늘어난 VIP (평소 주기의 1.5배)`, `관심 브랜드 신상품 부재 또는 직전 방문의 불편`, `관심 브랜드 입고 1:1 안내 + 프라이빗 피팅 예약. 불편 이력이 있으면 현장 재량 보상`, `담당 사원 직접 연락 · 감지 후 7일 이내`, `리츠칼튼 선호 기록 · 노드스트롬 스타일리스트`, `연락 후 30일 내 방문율 50% · 방문 주기 회복률`],
+          [`4. 혜택 미사용 고객 (라운지 · 주차 연 0회)`, `혜택을 모르거나 쓰는 방법이 번거로움`, `월 1회 소규모 클래스 (향수 · 와인 · 리빙) 초대 + 라운지 예약을 앱 터치 한 번으로`, `문자 + 앱 · 매월 첫째 주`, `올리브영 올리브 클래스 · 스타벅스 Reserve 경험`, `혜택 사용률 · 사용자/미사용자 이탈률 격차`],
+          [`5. 행사 때만 오는 고객 (시즌행사 외 무방문)`, `할인이 있을 때만 올 이유가 있음`, `행사 사이에 비할인 경험 (신상품 프리뷰 · 클래스) 제공. 다음 시즌 선입장 조건에 '비행사 기간 1회 방문' 포함`, `앱 · 시즌행사 종료 3~4주 후`, `노드스트롬 등급별 선입장 · 올리브영 월간 고정일`, `비행사 기간 방문 비중 · 쿠폰 없는 구매 비중`],
+        ] },
+      ],
+      qa: [
+        [`재방문 3단계 중 가장 먼저 손볼 단계와 이유`, `① Step 2 실시간 알림입니다. 시즌행사(Step 1)는 경쟁사도 모두 하는 것이라 차별화가 어렵고, 채널 최적화(Step 3)는 보낼 내용이 정해진 뒤에야 의미가 있습니다. ② 알림은 WS 05 1단계(빈도 감소 감지)와 바로 연결되는 유일한 도구입니다. ③ 단, '신상품 전체 알림'이 아니라 '관심 브랜드 입고 알림'으로 좁혀야 광고로 읽히지 않습니다.`],
+        [`재방문 성과를 무엇으로 측정할 것인가 · 지표와 목표값`, `① 등급별 90일 재방문율 (Gold +10%p) ② 평균 방문 주기 (Gold 20% 단축) ③ 혜택 사용률 (라운지 · 주차) ④ 쿠폰 없는 방문 비중. 최종 지표는 Gold 이탈률 22% → 16%로 두고, WS 07의 정량 목표와 같은 숫자를 씁니다. 방문 수만 늘고 이탈률이 그대로면 쿠폰이 만든 방문입니다.`],
+      ],
+      coach: `방문 트리거 칸이 모두 '쿠폰'으로 채워진 조가 반드시 나옵니다. '쿠폰이 끝나면 이 고객은 다시 옵니까'를 물으십시오. '오지 않는 이유(가설)' 칸을 먼저 채워야 트리거가 이유와 연결됩니다. 2번 Silver 상위층은 WS 02의 Gold 기준 인하(620만원→400만원)와 연결해 설명하십시오.`,
+    },
+  },
+  {
+    id: `ws05`, part: `p5`, label: `실습 ⑤`, title: `이탈 위험 대응 시나리오`, time: `35분`,
+    goal: `다섯 단계 신호마다 누가 언제 무엇을 할지 정하십시오.`,
+    hint: `케이스 참고 · 작년 Gold → Silver 하락이 610명입니다. Silver → Gold 승급 420명보다 많습니다. 등급이 줄어들고 있습니다.`,
+    tables: [
+      { cols: [`신호 단계`, `우리 데이터에서 어떻게 확인하나`, `대응 담당`, `대응 시점`, `구체적 액션`], rows: [`1. 빈도 감소`, `2. 금액 감소`, `3. 유지선 미달 예상`, `4. 등급 하락 확정`, `5. 완전 이탈`] },
+    ],
+    questions: [`등급 하락 통보를 어떻게 전할 것인가`, `회복을 시도하지 않기로 할 기준`],
+    answer: {
+      tables: [
+        { cols: [`신호 단계`, `우리 데이터에서 어떻게 확인하나`, `대응 담당`, `대응 시점`, `구체적 액션`], rows: [
+          [`1. 빈도 감소`, `평소 방문 주기의 1.5배가 지나도 방문 없음 (예: 월 2회 고객이 45일 미방문)`, `CRM 자동 감지 → 담당 사원 알림`, `감지 즉시 (자동)`, `관심 브랜드 신상품 입고 알림. 아직 혜택을 쓰지 않습니다. 이 단계는 '떠올리게 하기'입니다.`],
+          [`2. 금액 감소`, `최근 3개월 구매액이 전년 동기 대비 30% 이상 감소`, `담당 판매사원`, `감지 후 7일 이내`, `구매 카테고리 변화를 먼저 확인합니다. 이탈이 아니라 관심사가 바뀐 것일 수 있습니다. 확인 후 해당 카테고리 제안.`],
+          [`3. 유지선 미달 예상`, `연말까지의 추세로 계산했을 때 등급 유지 기준에 미달할 것으로 예상 (10월 시점 판정)`, `CRM팀 + 담당 사원`, `10월 (연말 2개월 전)`, `"유지까지 ○○만원 남았습니다"를 개인별로 안내합니다. 이 시점의 안내 1회가 하락 통보 10회보다 효과적입니다.`],
+          [`4. 등급 하락 확정`, `연간 실적 마감 결과 기준 미달 확정`, `담당 사원 (문자 아님)`, `확정 시점보다 3개월 앞선 예고`, `하락은 통보가 아니라 예고입니다. 미리 알리고, 하락 후에도 일정 기간 기존 혜택 일부를 유지해 재승급 기회를 남깁니다.`],
+          [`5. 완전 이탈`, `12개월 이상 무구매`, `자동화 채널만`, `월 1회 자동 발송`, `개별 접촉을 하지 않습니다. 이메일·앱 푸시만 유지하고, 재구매 발생 시 자동으로 등급 산정에 재편입되게 합니다.`],
+        ] },
+      ],
+      qa: [
+        [`등급 하락 통보를 어떻게 전할 것인가`, `① 3개월 전에 예고합니다. 마감 후 통보는 배신감을 만듭니다. ② 문자가 아니라 담당 사원이 직접 전합니다. 사람이 전하면 관계가 남습니다. ③ 하락 사실보다 '재승급까지 얼마'를 중심으로 말합니다. 끝이 아니라 과정으로 프레이밍합니다. ④ 하락 후 3개월간 기존 혜택 일부(주차·라운지)를 유예 제공합니다.`],
+        [`회복을 시도하지 않기로 할 기준`, `① 24개월 이상 무구매이고, ② 최근 2년 누적 구매액이 등급 기준의 30% 미만이며, ③ 직전 2회의 접촉에 무반응인 경우. 세 조건을 모두 충족하면 개별 접촉을 중단하고 자동화 채널만 유지합니다. 관리를 끊는 것이 아니라 사람이 붙는 비싼 채널에서 자동화된 싼 채널로 옮기는 것입니다.`],
+      ],
+      coach: `작년 Gold→Silver 하락 610명이 이 실습의 배경입니다. 1~3단계에서 잡았어야 할 고객이 4단계까지 온 것입니다. '몇 단계에서 잡는 것이 가장 싼가'를 물으십시오.`,
+    },
+  },
+  {
+    id: `ws06`, part: `p6`, label: `실습 ⑥`, title: `개인화 커뮤니케이션 연간 캘린더`, time: `35분`,
+    goal: `1년 동안 언제 어떤 이유로 연락할지 미리 정해 두십시오.`,
+    hint: `'유지선 미달 예상 시' 행이 이 캘린더의 핵심입니다. 나머지는 관례적 접촉이고, 이 한 줄만이 실제로 등급 하락을 막습니다.`,
+    tables: [
+      { cols: [`시점`, `연락 사유`, `대상 등급`, `채널`, `메시지 핵심`, `기대 효과`], rows: [`가입 · 승급 직후`, `생일 월`, `시즌 행사 전`, `관심 브랜드 신상품`, `유지선 미달 예상 시`, `연말 등급 확정 전`] },
+    ],
+    questions: [`등급별 연간 접촉 횟수 상한과 그 근거`],
+    answer: {
+      tables: [
+        { cols: [`시점`, `연락 사유`, `대상 등급`, `채널`, `메시지 핵심`, `기대 효과`], rows: [
+          [`가입 · 승급 직후`, `환영과 혜택 안내 (가장 중요한 접점)`, `전 등급`, `VVIP·VIP 전화 / Gold 이하 앱+문자`, `"이제 무엇이 달라지는지"를 혜택 목록이 아니라 사용법으로 안내`, `혜택 미사용으로 인한 초기 이탈 방지 · 첫 3개월 사용률 확보`],
+          [`생일 월`, `축하와 사은`, `Gold 이상`, `카드 + 앱`, `할인이 아니라 사은품·라운지 초대. 파는 말을 하지 않는 유일한 달`, `관계 형성 · 비구매 접점 확보`],
+          [`시즌 행사 전`, `사전 안내와 우선권`, `전 등급 (등급별 시차)`, `VVIP 3일 전 / VIP 2일 전 / 그 외 당일`, `"먼저 보실 수 있습니다" — 혜택의 내용보다 순서가 특권입니다`, `우선권의 체감 · 상위 등급 만족도`],
+          [`관심 브랜드 신상품`, `취향 기반 입고 알림`, `VIP 이상 (Gold는 카테고리 단위)`, `담당 사원 직접 + 앱 알림`, `고객이 예상할 수 있는 범위의 개인화만. 추정한 정보는 쓰지 않음`, `구매 빈도 증가 · 개인화 체감`],
+          [`유지선 미달 예상 시`, `재승급 · 유지 안내`, `Gold 이상`, `담당 사원 전화`, `"유지까지 ○○만원 남았습니다" — 잔여 금액을 숫자로 제시`, `등급 하락 방지 · WS 05의 3단계와 연결`],
+          [`연말 등급 확정 전`, `한 해 감사와 다음 해 안내`, `전 등급`, `VVIP·VIP 대면 / 그 외 앱`, `확정 결과보다 다음 해 목표를 함께 제시`, `재계약 심리 형성 · 이탈 예방`],
+        ] },
+      ],
+      qa: [[`등급별 연간 접촉 횟수 상한과 그 근거`, `VVIP 연 12회 (월 1회) — 전담 응대가 혜택이므로 상한이 높습니다. 단 판매 목적 연락은 이 중 4회 이내로 제한합니다. / VIP 연 8회 — 담당 사원 접촉 4회 + 자동 안내 4회. / Gold 연 6회 — 이 중 2회는 승급·유지 안내에 배정합니다. / Silver · 일반 연 4회 이하 — 접촉이 잦을수록 광고로 인식됩니다. 자동화 채널만 사용합니다.`]],
+      notes: [`마케팅 정보 수신은 별도 동의 항목입니다. 동의자만 추출해 발송하고, 야간(21시~08시) 발송은 하지 않습니다. 교육 목적의 개괄 안내이며 법률 자문이 아닙니다.`],
+      coach: `'유지선 미달 예상 시' 행이 이 캘린더의 핵심입니다. 이 칸을 비워 두었다면 반드시 채우십시오.`,
+    },
+  },
+  {
+    id: `ws07`, part: `p7`, label: `실습 ⑦`, title: `VIP 마케팅 전략 기획안`, time: `45분`,
+    goal: `앞선 워크시트를 옮겨 담고, 이 전략이 무엇을 바꾸는지 적으십시오.`,
+    hint: `1~6번은 옮겨 적기입니다. 채점은 7번에서 합니다. '매출 증대' 같은 말이 아니라 숫자가 있어야 하고, 그 숫자가 앞 워크시트에서 나온 것이어야 합니다.`,
+    tables: [
+      { cols: [`구성`, `내용`, `가져올 워크시트`], rows: [`1. 현황 진단과 문제 정의`, `2. 등급 체계와 기준`, `3. 등급별 혜택 패키지`, `4. 예산과 수익성 검증`, `5. 이탈 방지 운영 체계`, `6. 개인화 커뮤니케이션 계획`, `7. 기대 효과 (정량 목표)`], fixed: { 2: [`CASE · WS 01`, `WS 02`, `WS 03`, `WS 04`, `WS 05`, `WS 06`, `전체`] } },
+      { cols: [`정량 목표`, `현재`, `1년 후 목표`, `달성 방법`], rows: [`상위 2등급 매출 비중`, `Gold 이탈률`, `Silver → Gold 승급 인원`], fixed: { 1: [`33.8%`, `22%`, `420명`] } },
+    ],
+    answer: {
+      tables: [
+        { cols: [`구성`, `내용 — 예시답안`, `가져올 워크시트`], rows: [
+          [`1. 현황 진단과 문제 정의`, `상위 1.2%(970명)가 매출 33.8%를 만드는 반면, Gold 등급이 무너지고 있습니다. 작년 승급 420명 대 하락 610명으로 순감 190명이며, 이 추세면 3년 뒤 Gold가 절반이 됩니다. 문제는 '상위층을 못 지키는 것'이 아니라 '중간층이 올라오지 못하는 것'입니다.`, `CASE · WS 01`],
+          [`2. 등급 체계와 기준`, `5개 등급을 유지하되 Gold 기준을 620만원에서 400만원으로 낮추고 목표 인원을 3,200명 → 4,200명으로 늘립니다. 최상위 VVIP는 150명 인원 상한과 초청 심사로 희소성을 지킵니다. 인원 합계 84,170명.`, `WS 02`],
+          [`3. 등급별 혜택 패키지`, `하위는 편의(주차·쿠폰), 상위는 관계와 경험(전담 어드바이저·초청 행사·비공개 프리뷰)으로 축을 옮깁니다. Silver에는 라운지 연 2회 체험권을 넣어 Gold 혜택을 미리 경험하게 합니다.`, `WS 03`],
+          [`4. 예산과 수익성 검증`, `혜택 원가 26.36억 + 운영비 3.6억 = 29.96억으로 예산 30억 이내입니다. 혜택÷LTV는 전 등급 0.9~2.2% 구간이며, 금액이 아니라 비율로 균형을 맞췄습니다.`, `WS 04`],
+          [`5. 이탈 방지 운영 체계`, `빈도 감소 → 금액 감소 → 유지선 미달 예상 → 하락 확정 → 완전 이탈 5단계에 담당자와 시점을 지정합니다. 핵심은 3단계입니다. 10월에 '유지까지 ○○만원' 안내 1회를 자동화합니다.`, `WS 05`],
+          [`6. 개인화 커뮤니케이션 계획`, `연 6개 접점(가입·생일·시즌 전·신상품·유지선 미달·연말)을 고정하고 등급별 접촉 상한을 둡니다. VVIP 12회 ~ Silver 4회.`, `WS 06`],
+          [`7. 기대 효과 (정량 목표)`, `Gold 순증 1,000명 → 매출 +47억원. 상위 2등급 매출 비중 33.8% → 37%. Gold 이탈률 22% → 16%. 총 매출 838억 → 885억 (+5.6%). 투입 예산은 30억으로 동일합니다.`, `전체`],
+        ] },
+        { cols: [`정량 목표`, `현재`, `1년 후 목표`, `달성 방법 — 예시답안`], rows: [
+          [`상위 2등급 매출 비중`, `33.8%`, `37%`, `VVIP 150명 · VIP 950명으로 인원을 늘리고, 총 매출 증가(838억 → 885억)를 감안한 수치입니다. 상위 2등급 매출 329억 ÷ 885억.`],
+          [`Gold 이탈률`, `22%`, `16%`, `WS 05의 3단계(유지선 미달 예상 안내)를 자동화합니다. 이탈률 6%p 개선 시 평균 유지가 4.5년 → 6.25년, LTV가 837만원 → 1,163만원이 됩니다.`],
+          [`Silver → Gold 승급 인원`, `420명`, `1,000명`, `기준 금액을 300만원 낮춰 사다리 간격을 좁히고, Silver에 라운지 체험권을 제공해 승급 동기를 만듭니다. 하락 610명을 400명 이하로 억제하면 순증 600명이 됩니다.`],
+        ] },
+      ],
+      coach: `1~6번은 옮겨 적기입니다. 채점은 7번에서 하십시오. 숫자가 있어야 하고, 그 숫자가 앞 워크시트에서 나온 것이어야 합니다.`,
+    },
+  },
+  {
+    id: `ws08`, part: `p7`, label: `실습 ⑧`, title: `발표와 상호 평가`, time: `50분`,
+    goal: `팀당 7분 발표, 3분 질의응답입니다.`,
+    hint: `발표 순서 · 1. 현황 진단 (데이터에서 무엇을 읽었는가, 1분 30초) → 2. 등급 체계와 혜택 (누구에게 무엇을 줄 것인가, 2분) → 3. 예산과 수익성 (얼마를 써서 얼마를 지키는가, 2분) → 4. 운영 체계와 기대 효과 (어떻게 굴리고 무엇이 달라지는가, 1분 30초)`,
+    tables: [
+      { cols: [`평가 항목 (각 25점)`, `팀 ____`, `팀 ____`, `팀 ____`, `한 줄 코멘트`], rows: [`등급 기준의 논리성`, `혜택의 차별성과 창의성`, `예산·수익성 검증의 타당성`, `운영 체계의 실행 가능성`, `합계`] },
+    ],
+    answer: null,
+  },
+];
+
+/* 근거 찾기: 공식 출처 */
+const OFFICIAL = [
+  [`롯데백화점`, `MVG · 국내 3사`, `https://www.lotteshopping.com`],
+  [`신세계백화점`, `Trinity · 국내 3사`, `https://www.shinsegae.com`],
+  [`현대백화점`, `Club YP · 국내 3사`, `https://www.ehyundai.com`],
+  [`Nordstrom Nordy Club`, `벤치마킹 · 미국 백화점`, `https://www.nordstrom.com/browse/nordy-club`],
+  [`Sephora Beauty Insider`, `벤치마킹 · 미국 뷰티`, `https://www.sephora.com/profile/BeautyInsider`],
+  [`Starbucks Rewards`, `벤치마킹 · 2026 등급 개편`, `https://www.starbucks.com/rewards`],
+  [`올리브영`, `벤치마킹 · 올리브 멤버스`, `https://www.oliveyoung.co.kr`],
+  [`The Ritz-Carlton`, `벤치마킹 · 서비스 운영`, `https://www.ritzcarlton.com`],
+  [`국가법령정보센터`, `정보통신망법 · 개인정보보호법 원문`, `https://www.law.go.kr`],
+  [`개인정보보호위원회`, `마케팅 동의 · 가이드라인`, `https://www.pipc.go.kr`],
+];
+
+/* 검색 엔진: {q} 자리에 검색어가 들어갑니다. kind = 출처 성격 */
+const ENGINES = [
+  { id: `google`, name: `Google`, kind: `웹 · 홈페이지`, url: `https://www.google.com/search?q={q}`, recent: `&tbs=qdr:y` },
+  { id: `naver`, name: `네이버`, kind: `웹 · 블로그 · 카페`, url: `https://search.naver.com/search.naver?query={q}` },
+  { id: `daum`, name: `다음`, kind: `웹`, url: `https://search.daum.net/search?q={q}` },
+  { id: `gnews`, name: `Google 뉴스`, kind: `기사 · 뉴스`, url: `https://news.google.com/search?q={q}&hl=ko&gl=KR&ceid=KR:ko`, recent: ``, recentQ: ` when:1y` },
+  { id: `nnews`, name: `네이버 뉴스`, kind: `기사 · 뉴스`, url: `https://search.naver.com/search.naver?where=news&query={q}`, recent: `&sort=1` },
+  { id: `dnews`, name: `다음 뉴스`, kind: `기사 · 뉴스`, url: `https://search.daum.net/search?w=news&q={q}`, recent: `&sort=recency` },
+  { id: `youtube`, name: `YouTube`, kind: `영상`, url: `https://www.youtube.com/results?search_query={q}` },
+  { id: `scholar`, name: `Google Scholar`, kind: `논문 · 연구`, url: `https://scholar.google.com/scholar?q={q}`, recent: `&as_ylo=2024` },
+  { id: `riss`, name: `RISS`, kind: `국내 논문`, url: `https://www.riss.kr/search/Search.do?isDetailSearch=N&query={q}` },
+  { id: `dbpia`, name: `DBpia`, kind: `국내 논문`, url: `https://www.dbpia.co.kr/search/topSearch?searchOption=all&query={q}` },
+  { id: `bing`, name: `Bing`, kind: `웹 · 해외`, url: `https://www.bing.com/search?q={q}` },
+  { id: `gtrends`, name: `Google 트렌드`, kind: `관심도 추이`, url: `https://trends.google.com/trends/explore?geo=KR&q={q}` },
+];
+
+</script>
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = s => String(s ?? ``).replace(/[&<>"]/g, c => ({ "&": `&amp;`, "<": `&lt;`, ">": `&gt;`, '"': `&quot;` })[c]);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(`vipml:` + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(`vipml:` + k, JSON.stringify(v)); } catch {} },
+    del(k) { try { localStorage.removeItem(`vipml:` + k); } catch {} },
+  };
+  const fmt = (n, d = 0) => Number.isFinite(n) ? n.toLocaleString(`ko-KR`, { maximumFractionDigits: d, minimumFractionDigits: d }) : `—`;
+  const won = man => { // 만원 단위 → 읽기 쉬운 표기
+    if (!Number.isFinite(man)) return `—`;
+    if (Math.abs(man) >= 10000) { const eok = Math.floor(man / 10000), rest = Math.round(man - eok * 10000); return `${eok}억` + (rest ? ` ${fmt(rest)}만원` : `원`); }
+    return `${fmt(man, man < 10 && man % 1 ? 2 : 0)}만원`;
+  };
+  const allSlides = PARTS.flatMap(p => p.slides.map(s => ({ ...s, part: p })));
+
+  /* ---------- tabs ---------- */
+  const TABS = [`flow`, `time`, `calc`, `ws`, `search`];
+  function show(tab, focusId) {
+    if (!TABS.includes(tab)) tab = `flow`;
+    TABS.forEach(t => { $(`#v-` + t).hidden = t !== tab; });
+    document.querySelectorAll(`nav.tabs a`).forEach(a => a.dataset.tab === tab ? a.setAttribute(`aria-current`, `page`) : a.removeAttribute(`aria-current`));
+    store.set(`tab`, tab);
+    if (focusId) {
+      const el = document.getElementById(focusId);
+      if (el) { if (el.tagName === `DETAILS`) el.open = true; el.scrollIntoView({ block: `start` }); return; }
+    }
+    window.scrollTo({ top: 0 });
+  }
+  document.querySelectorAll(`nav.tabs a`).forEach(a => a.addEventListener(`click`, e => { e.preventDefault(); history.replaceState(null, ``, `#` + a.dataset.tab); show(a.dataset.tab); }));
+  function go(target) { // target: 'calc' | 'ws01' | 'p3' | 'case' ...
+    if (target === `calc`) return show(`calc`);
+    if (WS.some(w => w.id === target)) { openWs(target); return show(`ws`); }
+    show(`flow`, target);
+  }
+  document.addEventListener(`click`, e => {
+    const g = e.target.closest(`[data-go]`); if (g) { e.preventDefault(); go(g.dataset.go); }
+    const q = e.target.closest(`[data-q]`); if (q) { e.preventDefault(); search(q.dataset.q); }
+  });
+
+  /* ---------- flow ---------- */
+  function caseTable() {
+    const r = CASE.rows.map(([g, n, buy, rev, share, churn, cost]) =>
+      `<tr><td class="k">${g}</td><td class="n">${fmt(n)}명</td><td class="n">${won(buy)}</td><td class="n">${rev}억원</td><td class="n">${share}</td><td class="n">${churn == null ? `—` : churn + `%`}</td><td class="n">${fmt(cost, cost % 1 ? 1 : 0)}만원</td></tr>`).join(``);
+    return `<div class="tbl"><table><thead><tr><th>등급</th><th class="n">인원</th><th class="n">1인 연 구매액</th><th class="n">등급 매출</th><th class="n">매출 비중</th><th class="n">연 이탈률</th><th class="n">1인 연 혜택 원가</th></tr></thead><tbody>${r}<tr class="total">${CASE.total.map((c, i) => `<td class="${i ? `n` : `k`}">${c}</td>`).join(``)}</tr></tbody></table></div>
+    <div class="tbl"><table><tbody>${CASE.extra.map(([k, v]) => `<tr><td class="k">${k}</td><td>${v}</td></tr>`).join(``)}</tbody></table></div>`;
+  }
+  function plainTable(t) {
+    return `<div class="tbl"><table><thead><tr>${t.cols.map(c => `<th>${esc(c)}</th>`).join(``)}</tr></thead><tbody>${t.rows.map(r => `<tr>${r.map((c, i) => `<td${i ? `` : ` class="k"`}>${esc(c)}</td>`).join(``)}</tr>`).join(``)}</tbody></table></div>`;
+  }
+  function slideHtml(s, open) {
+    let b = ``;
+    if (s.items) b += `<div class="items">${s.items.map(([h, d]) => `<div class="item"><b>${esc(h)}</b><p>${esc(d)}</p></div>`).join(``)}</div>`;
+    if (s.groups) b += `<div class="items">${s.groups.map(([h, l]) => `<div class="item"><b>${esc(h)}</b><ul>${l.map(x => `<li>${esc(x)}</li>`).join(``)}</ul></div>`).join(``)}</div>`;
+    if (s.formula) b += `<div class="formula">${s.formula.map(f => `<div>${esc(f)}</div>`).join(``)}</div>`;
+    if (s.table) b += plainTable(s.table);
+    if (s.caseTable) b += caseTable();
+    if (s.journey) b += `<div class="journey">${s.journey.map(x => `<span>${x}</span>`).join(`<i>→</i>`)}<i>→</i><span>인식</span></div>`;
+    if (s.tips) b += `<div class="tips">${s.tips.map(([h, d]) => `<div class="tip"><b>${esc(h)}</b><p>${esc(d)}</p></div>`).join(``)}</div>`;
+    if (s.note) b += `<p class="note">※ ${esc(s.note)}</p>`;
+    if (s.link) b += `<div class="row"><a class="btn" href="#" data-go="${s.link[0]}">${esc(s.link[1])} →</a></div>`;
+    b += `<div class="evidence"><span>근거 찾기</span>${s.q.map(q => `<button class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join(``)}</div>`;
+    return `<details class="slide" id="${s.id}"${open ? ` open` : ``}><summary><span class="pg">p.${s.page}</span><div><h3>${esc(s.title)}</h3><p>${esc(s.sub)}</p></div><span class="chev" aria-hidden="true">▶</span></summary><div class="slide-body">${b}</div></details>`;
+  }
+  function renderFlow() {
+    const spine = `<nav class="spine" aria-label="7단계 흐름">${PARTS.map(p => `<a href="#" data-go="${p.id}"><b>PART ${p.no}</b><span>${p.name}</span><em>${esc(p.title)}</em></a>`).join(``)}</nav>`;
+    const parts = PARTS.map((p, i) => {
+      const wss = WS.filter(w => w.part === p.id);
+      return `<article class="part" id="${p.id}">
+        <div class="part-head"><span class="eyebrow">PART ${p.no} · ${p.name}</span><h2>${esc(p.title)}</h2><p class="part-q">${esc(p.question)}</p></div>
+        <div class="slides">${p.slides.map((s, j) => slideHtml(s, i === 0 && j === 0)).join(``)}</div>
+        ${wss.length ? `<div class="row">${wss.map(w => `<a class="btn ghost" href="#" data-go="${w.id}">✎ ${w.label} ${esc(w.title)} · ${w.time}</a>`).join(``)}</div>` : ``}
+        ${p.bridge ? `<div class="bridge"><p><b>다음 흐름으로 · </b>${esc(p.bridge)}</p></div>` : `<div class="bridge"><p><b>정리 · </b>이해(왜) → 벤치마크(남은 어떻게) → 등급(누구에게) → 혜택·수익성(무엇을 얼마로) → 유지·이탈(어떻게 지키나) → 개인화·CX(어떻게 말하나) → 균형·실행(무엇이 달라지나). 실습 ⑦ 기획안이 이 일곱 단계를 한 장에 다시 모읍니다.</p></div>`}
+      </article>`;
+    }).join(``);
+    $(`#v-flow`).innerHTML = spine + parts;
+  }
+
+  /* ---------- timetable ---------- */
+  function renderTime() {
+    const rows = TIMETABLE.map(([t, kind, what, link]) => {
+      const cls = kind === `강의` ? `lec` : kind.startsWith(`실습`) ? `ws` : ``;
+      const rest = !what;
+      return `<tr class="${rest ? `rest` : ``}"><td>${t}</td><td><span class="tag ${cls}">${kind}</span></td><td>${esc(what) || `—`}</td><td>${link ? `<a href="#" data-go="${link}">열기 →</a>` : ``}</td></tr>`;
+    }).join(``);
+    $(`#v-time`).innerHTML = `<div class="panel"><span class="eyebrow">강사용 큐시트 · 8시간</span><h2>하루의 흐름</h2><p>오전은 이해와 벤치마크, 오후는 설계와 검증, 마지막은 이탈과 개인화입니다. 각 행의 "열기"를 누르면 해당 내용이나 워크시트로 이동합니다.</p><div class="tbl tt"><table><thead><tr><th>시간</th><th>구분</th><th>내용</th><th></th></tr></thead><tbody>${rows}</tbody></table></div><p class="note">실습 ⑦ 기획안(45분)과 실습 ⑧ 발표·상호 평가(50분), 추가 실습(재방문 유도, 25분)은 통합본 후반부에 이어집니다.</p></div>`;
+  }
+
+  /* ---------- calculator ---------- */
+  const PRESETS = {
+    current: { label: `현재 케이스`, rows: CASE.rows.map(([g, n, buy, , , churn, cost]) => ({ g, n, buy, churn: churn ?? 50, cost })) },
+    design: { label: `예시답안 설계 (WS 02 · 04)`, rows: [
+      { g: `VVIP`, n: 150, buy: 8000, churn: 5, cost: 430 },
+      { g: `VIP`, n: 950, buy: 2200, churn: 12, cost: 88 },
+      { g: `Gold`, n: 4200, buy: 620, churn: 22, cost: 18 },
+      { g: `Silver`, n: 12500, buy: 150, churn: 35, cost: 2.5 },
+      { g: `일반`, n: 66370, buy: 26, churn: 50, cost: 0.13 },
+    ] },
+  };
+  let calc = store.get(`calc`, null) || { gp: 30, budget: 30, ops: 3.6, limit: 20, rows: PRESETS.current.rows.map(r => ({ ...r })) };
+  const years = churn => churn > 0 ? Math.round(10 / (churn / 100)) / 10 : NaN; // 교안과 같이 소수 첫째 자리 반올림
+  const ltv = (buy, churn, gp) => buy * (gp / 100) * years(churn);
+  function renderCalc() {
+    $(`#v-calc`).innerHTML = `
+      <div class="panel"><span class="eyebrow">p.16 · 실습 케이스</span><h2>A백화점 등급별 고객 현황</h2><p>연간 기준입니다. 모든 실습은 이 데이터를 근거로 진행합니다. (교육용 가상 데이터)</p>${caseTable()}</div>
+      <div class="panel calc"><span class="eyebrow">p.20 · 실습 ② ④ 계산</span><h2>등급 설계 · LTV · 예산 계산기</h2>
+        <p>인원, 구매액, 이탈률, 1인 혜택 원가를 바꾸면 LTV와 예산이 바로 다시 계산됩니다. 평균 유지 연수 ≒ 1 ÷ 연 이탈률, LTV = 연 구매금액 × GP율 × 평균 유지 연수. 일반 등급 이탈률 50%는 교안의 "LTV 약 15만원"에 맞춘 가정입니다.</p>
+        <div class="row"><span class="note">불러오기</span><button class="btn sm" data-preset="current">현재 케이스</button><button class="btn sm" data-preset="design">예시답안 설계 (WS 02 · 04)</button><button class="btn sm ghost" id="addRow">+ 등급 추가</button></div>
+        <div class="settings">
+          <label for="c-gp">GP율 (%)<input id="c-gp" type="number" step="1" value="${calc.gp}"></label>
+          <label for="c-limit">혜택 투자 한도 (LTV × %)<input id="c-limit" type="number" step="5" value="${calc.limit}"></label>
+          <label for="c-budget">연간 예산 (억원)<input id="c-budget" type="number" step="0.1" value="${calc.budget}"></label>
+          <label for="c-ops">운영비 (억원)<input id="c-ops" type="number" step="0.1" value="${calc.ops}"></label>
+        </div>
+        <div class="kpis" id="kpis"></div>
+        <div class="tbl"><table id="ctable"></table></div>
+        <p class="note">판정 · 1인 혜택 원가가 투자 한도(LTV × ${calc.limit}%)의 10% 미만이면 "여유(더 쓸 수 있음)", 100%를 넘으면 "과다"입니다. 교안 예시답안의 VVIP·VIP "부족"은 한도 대비 덜 쓰고 있다는 뜻입니다.</p>
+      </div>
+      <div class="panel"><span class="eyebrow">p.20 · 이탈률이 LTV를 결정합니다</span><h2>이탈률 개선 시뮬레이터</h2>
+        <p>예시: Silver 이탈률 35% → 25%이면 평균 유지 2.9년 → 4년, LTV 131만원 → 180만원. Gold 22% → 16%이면 LTV 837만원 → 약 1,163만원(실습 ⑦ 목표).</p>
+        <div class="sim"><div class="settings">
+          <label for="s-grade">등급<select id="s-grade">${calc.rows.map((r, i) => `<option value="${i}"${r.g === `Silver` ? ` selected` : ``}>${esc(r.g)}</option>`).join(``)}</select></label>
+          <label for="s-churn" style="flex:1;min-width:200px">개선 후 연 이탈률 <span id="s-val" class="num"></span><input id="s-churn" type="range" min="1" max="60" step="1" value="25"></label>
+        </div><div class="bars" id="s-bars"></div></div>
+      </div>`;
+    drawCalc(); drawSim();
+  }
+  $(`#v-calc`).addEventListener(`input`, onCalcInput);
+  $(`#v-calc`).addEventListener(`click`, e => {
+      const p = e.target.closest(`[data-preset]`);
+      if (p) { calc.rows = PRESETS[p.dataset.preset].rows.map(r => ({ ...r })); saveCalc(); renderCalc(); }
+      if (e.target.id === `addRow`) { calc.rows.push({ g: `새 등급`, n: 0, buy: 0, churn: 30, cost: 0 }); saveCalc(); renderCalc(); }
+      const del = e.target.closest(`[data-del]`);
+      if (del) { calc.rows.splice(+del.dataset.del, 1); saveCalc(); renderCalc(); }
+  });
+  function saveCalc() { store.set(`calc`, calc); }
+  function onCalcInput(e) {
+    const t = e.target;
+    if (t.id === `c-gp`) calc.gp = +t.value; else if (t.id === `c-budget`) calc.budget = +t.value; else if (t.id === `c-ops`) calc.ops = +t.value; else if (t.id === `c-limit`) calc.limit = +t.value;
+    else if (t.dataset.r != null) { const r = calc.rows[+t.dataset.r]; r[t.dataset.f] = t.dataset.f === `g` ? t.value : +t.value; }
+    else if (t.id === `s-grade` || t.id === `s-churn`) return drawSim();
+    else return;
+    saveCalc(); drawCalc(true); drawSim();
+  }
+  function drawCalc(keepInputs) {
+    const R = calc.rows.map(r => {
+      const y = years(r.churn), L = ltv(r.buy, r.churn, calc.gp), lim = L * calc.limit / 100;
+      return { ...r, y, L, lim, ratio: r.cost / L, use: r.cost / lim, total: r.cost * r.n / 10000, rev: r.buy * r.n / 10000 };
+    });
+    const N = R.reduce((a, r) => a + r.n, 0), cost = R.reduce((a, r) => a + r.total, 0), rev = R.reduce((a, r) => a + r.rev, 0);
+    const top2 = R.slice(0, 2).reduce((a, r) => a + r.rev, 0);
+    const spend = cost + calc.ops, okB = spend <= calc.budget + 0.05, okN = N === 84170;
+    $(`#kpis`).innerHTML = `
+      <div class="kpi"><span>인원 합계 (케이스 84,170명)</span><b>${fmt(N)}명</b><small class="${okN ? `ok` : `warn`}">${okN ? `케이스와 일치` : `차이 ${fmt(N - 84170)}명 · 어느 등급에서 새는지 확인`}</small></div>
+      <div class="kpi"><span>혜택 원가 + 운영비</span><b>${fmt(spend, 2)}억</b><small class="${okB ? `ok` : `bad`}">${okB ? `예산 ${calc.budget}억 이내` : `예산 ${fmt(spend - calc.budget, 2)}억 초과`}</small></div>
+      <div class="kpi"><span>연 매출 추정 (인원 × 구매액)</span><b>${fmt(rev)}억</b><small>케이스 838억 대비 ${rev >= 838 ? `+` : ``}${fmt(rev - 838)}억</small></div>
+      <div class="kpi"><span>상위 2등급 매출 비중</span><b>${fmt(top2 / rev * 100, 1)}%</b><small>현재 33.8% · 목표 37%</small></div>`;
+    const head = `<thead><tr><th>등급</th><th class="n">인원</th><th class="n">비중</th><th class="n">1인 연 구매액(만원)</th><th class="n">연 이탈률(%)</th><th class="n">1인 혜택 원가(만원)</th><th class="n">평균 유지</th><th class="n">1인 LTV</th><th class="n">혜택÷LTV</th><th class="n">투자 한도</th><th class="n">등급 총 원가</th><th>판정</th><th></th></tr></thead>`;
+    const body = R.map((r, i) => {
+      const verdict = !Number.isFinite(r.use) ? `<span class="pill">—</span>` : r.use > 1 ? `<span class="pill bad">과다</span>` : r.use < .1 ? `<span class="pill ok">여유</span>` : `<span class="pill warn">적정</span>`;
+      const inp = (f, step) => `<input type="${f === `g` ? `text` : `number`}" id="c-${i}-${f}" data-r="${i}" data-f="${f}" value="${r[f]}"${step ? ` step="${step}"` : ``} aria-label="${esc(r.g)} ${f}">`;
+      return `<tr><td>${inp(`g`)}</td><td>${inp(`n`, 10)}</td><td class="n" data-o="share">${fmt(r.n / N * 100, 2)}%</td><td>${inp(`buy`, 10)}</td><td>${inp(`churn`, 1)}</td><td>${inp(`cost`, .5)}</td>
+        <td class="n">${fmt(r.y, 1)}년</td><td class="n">${won(r.L)}</td><td class="n">${fmt(r.ratio * 100, 2)}%</td><td class="n">${won(r.lim)}</td><td class="n">${fmt(r.total, 2)}억</td><td>${verdict}</td><td><button class="btn sm ghost" data-del="${i}" aria-label="${esc(r.g)} 삭제">×</button></td></tr>`;
+    }).join(``);
+    const foot = `<tr class="total"><td>합계</td><td class="n">${fmt(N)}명</td><td class="n">100%</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="n">${fmt(cost, 2)}억</td><td colspan="2"></td></tr>`;
+    const tbl = $(`#ctable`);
+    if (keepInputs && tbl.rows.length === R.length + 2) {
+      // 입력 중 포커스를 잃지 않도록 계산 칸만 갱신
+      const tmp = document.createElement(`table`); tmp.innerHTML = head + `<tbody>` + body + foot + `</tbody>`;
+      [...tmp.rows].forEach((row, ri) => [...row.cells].forEach((cell, ci) => { if (!cell.querySelector(`input`)) tbl.rows[ri].cells[ci].innerHTML = cell.innerHTML; }));
+    } else tbl.innerHTML = head + `<tbody>` + body + foot + `</tbody>`;
+  }
+  function drawSim() {
+    const sel = $(`#s-grade`), rng = $(`#s-churn`); if (!sel) return;
+    const r = calc.rows[+sel.value] || calc.rows[0]; if (!r) return;
+    const after = +rng.value; $(`#s-val`).textContent = `${after}%`;
+    const a = ltv(r.buy, r.churn, calc.gp), b = ltv(r.buy, after, calc.gp), max = Math.max(a, b) || 1;
+    $(`#s-bars`).innerHTML = `
+      <div class="bar"><span>현재 ${r.churn}%</span><div><i style="width:${a / max * 100}%"></i></div><span class="num">${won(a)}</span></div>
+      <div class="bar after"><span>개선 ${after}%</span><div><i style="width:${b / max * 100}%"></i></div><span class="num">${won(b)}</span></div>
+      <p class="note">평균 유지 ${fmt(years(r.churn), 1)}년 → ${fmt(years(after), 1)}년 · 1인 LTV ${b >= a ? `+` : ``}${won(b - a)} · ${esc(r.g)} ${fmt(r.n)}명 기준 총 ${b >= a ? `+` : ``}${fmt((b - a) * r.n / 10000, 1)}억원</p>`;
+  }
+
+  /* ---------- worksheets ---------- */
+  let curWs = store.get(`ws`, `ws01`);
+  const wsKey = (w, ...p) => `w:${w}:` + p.join(`:`);
+  function wsFilled(w) {
+    let n = 0, f = 0;
+    w.tables.forEach((t, ti) => t.rows.forEach((lab, ri) => t.cols.forEach((c, ci) => {
+      if (ci === 0 && lab) return; if (t.fixed && t.fixed[ci]) return;
+      n++; if (store.get(wsKey(w.id, ti, ri, ci), ``).trim()) f++;
+    })));
+    (w.questions || []).forEach((q, qi) => { n++; if (store.get(wsKey(w.id, `q`, qi), ``).trim()) f++; });
+    return [f, n];
+  }
+  function openWs(id) { curWs = id; store.set(`ws`, id); renderWs(); }
+  function renderWs() {
+    const w = WS.find(x => x.id === curWs) || WS[0];
+    const list = WS.map(x => { const [f, n] = wsFilled(x); return `<button aria-pressed="${x.id === w.id}" data-ws="${x.id}"><small>${x.label} · ${x.time}</small><b>${esc(x.title)}</b><span class="done">${f}/${n} 칸 작성</span></button>`; }).join(``);
+    const tables = w.tables.map((t, ti) => `<div class="tbl wsgrid"><table><thead><tr>${t.cols.map(c => `<th>${esc(c)}</th>`).join(``)}</tr></thead><tbody>${t.rows.map((lab, ri) => `<tr>${t.cols.map((c, ci) => {
+      if (ci === 0 && lab) return `<td class="k">${esc(lab)}</td>`;
+      if (t.fixed && t.fixed[ci]) return `<td class="fixed">${esc(t.fixed[ci][ri])}</td>`;
+      const id = `${w.id}-${ti}-${ri}-${ci}`;
+      return `<td><textarea id="${id}" data-k="${wsKey(w.id, ti, ri, ci)}" aria-label="${esc(lab || `행 ${ri + 1}`)} · ${esc(c)}" placeholder="${ci === 0 ? esc(c) : ``}">${esc(store.get(wsKey(w.id, ti, ri, ci), ``))}</textarea></td>`;
+    }).join(``)}</tr>`).join(``)}</tbody></table></div>`).join(``);
+    const qs = (w.questions || []).map((q, qi) => `<div class="qa"><label for="${w.id}-q${qi}">${esc(q)}</label><textarea id="${w.id}-q${qi}" data-k="${wsKey(w.id, `q`, qi)}">${esc(store.get(wsKey(w.id, `q`, qi), ``))}</textarea></div>`).join(``);
+    const showAns = store.get(`ans:` + w.id, false);
+    let ans = ``;
+    if (w.answer) {
+      const a = w.answer;
+      ans = `<div class="answer" id="ans"${showAns ? `` : ` hidden`}><h3>예시답안</h3>
+        ${a.tables.map(plainTable).join(``)}
+        ${(a.qa || []).map(([q, t]) => `<div class="qa-a"><b>${esc(q)}</b><p>${esc(t)}</p></div>`).join(``)}
+        ${a.notes ? `<ul>${a.notes.map(n => `<li>${esc(n)}</li>`).join(``)}</ul>` : ``}
+        ${a.coach ? `<p class="coach"><b>생각할 질문 · </b>${esc(a.coach)}</p>` : ``}</div>`;
+    }
+    $(`#v-ws`).innerHTML = `<div class="ws-layout"><div class="ws-list" role="list">${list}</div>
+      <div style="display:grid;gap:16px;min-width:0">
+        <div class="ws-head"><span class="eyebrow">${w.label} · ${w.time}</span><h2>${esc(w.title)}</h2><div class="ws-meta"><span>${esc(w.goal)}</span><a href="#" data-go="${w.part}">관련 흐름 보기 →</a></div></div>
+        <div class="ws-fields"><label for="${w.id}-team">조<input id="${w.id}-team" data-k="${wsKey(w.id, `team`)}" value="${esc(store.get(wsKey(w.id, `team`), ``))}"></label><label for="${w.id}-author">작성자<input id="${w.id}-author" data-k="${wsKey(w.id, `author`)}" value="${esc(store.get(wsKey(w.id, `author`), ``))}"></label></div>
+        <div class="callout"><b>힌트 · </b>${esc(w.hint)}</div>
+        ${tables}${qs}
+        <div class="row">
+          ${w.answer ? `<button class="btn primary" id="toggleAns">${showAns ? `예시답안 숨기기` : `예시답안 보기`}</button>` : ``}
+          <button class="btn" id="copyWs">내 답안 복사 (표 형식)</button>
+          ${[`ws02`, `ws04`].includes(w.id) ? `<a class="btn ghost" href="#" data-go="calc">계산기 열기 →</a>` : ``}
+          <button class="btn ghost" id="clearWs">이 워크시트 비우기</button>
+          <span class="status" id="wsStatus" role="status"></span>
+        </div>
+        ${ans}
+      </div></div>`;
+  }
+  let clearArmed = false;
+  $(`#v-ws`).addEventListener(`input`, e => { const k = e.target.dataset.k; if (k) { store.set(k, e.target.value); const s = $(`#wsStatus`); if (s) s.textContent = `저장됨`; } });
+  $(`#v-ws`).addEventListener(`click`, async e => {
+    const b = e.target.closest(`[data-ws]`); if (b) { clearArmed = false; return openWs(b.dataset.ws); }
+    const w = WS.find(x => x.id === curWs) || WS[0];
+    if (e.target.id === `toggleAns`) { const el = $(`#ans`); el.hidden = !el.hidden; store.set(`ans:` + w.id, !el.hidden); e.target.textContent = el.hidden ? `예시답안 보기` : `예시답안 숨기기`; if (!el.hidden) el.scrollIntoView({ block: `nearest` }); }
+    if (e.target.id === `clearWs`) {
+      if (!clearArmed) { clearArmed = true; e.target.textContent = `한 번 더 누르면 모두 지웁니다`; return; }
+      clearArmed = false;
+      document.querySelectorAll(`#v-ws [data-k]`).forEach(el => store.del(el.dataset.k));
+      renderWs(); $(`#wsStatus`).textContent = `비웠습니다`;
+    }
+    if (e.target.id === `copyWs`) {
+      const lines = [`# ${w.label} ${w.title}`, `조: ${store.get(wsKey(w.id, `team`), ``)} / 작성자: ${store.get(wsKey(w.id, `author`), ``)}`, ``];
+      w.tables.forEach((t, ti) => {
+        lines.push(`| ${t.cols.join(` | `)} |`, `|${t.cols.map(() => ` --- `).join(`|`)}|`);
+        t.rows.forEach((lab, ri) => lines.push(`| ` + t.cols.map((c, ci) => (ci === 0 && lab) ? lab : (t.fixed && t.fixed[ci]) ? t.fixed[ci][ri] : store.get(wsKey(w.id, ti, ri, ci), ``).replace(/\n/g, ` `)).join(` | `) + ` |`));
+        lines.push(``);
+      });
+      (w.questions || []).forEach((q, qi) => lines.push(`**${q}**`, store.get(wsKey(w.id, `q`, qi), ``), ``));
+      const text = lines.join(`\n`);
+      try { await navigator.clipboard.writeText(text); $(`#wsStatus`).textContent = `복사했습니다`; }
+      catch { const ta = document.createElement(`textarea`); ta.value = text; ta.style.cssText = `width:100%;min-height:160px`; e.target.closest(`.row`).after(ta); ta.select(); $(`#wsStatus`).textContent = `자동 복사가 막혀 아래 칸에 표시했습니다. 선택 후 복사하십시오.`; }
+    }
+  });
+
+  /* ---------- search ---------- */
+  let sq = store.get(`sq`, `백화점 VIP 마케팅`), recent = store.get(`recent`, false), site = store.get(`site`, ``);
+  const KINDS = [[`웹 · 홈페이지`, [`google`, `naver`, `daum`, `bing`]], [`기사 · 뉴스`, [`gnews`, `nnews`, `dnews`]], [`영상`, [`youtube`]], [`논문 · 연구 · 추이`, [`scholar`, `riss`, `dbpia`, `gtrends`]]];
+  function engineUrl(e) {
+    let q = sq.trim();
+    if (site && [`google`, `bing`, `gnews`].includes(e.id)) q += ` site:` + site;
+    if (recent && e.recentQ) q += e.recentQ;
+    return e.url.replace(`{q}`, encodeURIComponent(q)) + (recent && e.recent ? e.recent : ``);
+  }
+  function localHits(q) {
+    const terms = q.toLowerCase().split(/\s+/).filter(t => t.length > 1);
+    if (!terms.length) return [];
+    const docs = [
+      ...allSlides.map(s => ({ go: s.id, where: `PART ${s.part.no} ${s.part.name} · p.${s.page}`, title: s.title, text: [s.sub, ...(s.items || []).flat(), ...(s.groups || []).flatMap(g => [g[0], ...g[1]]), ...(s.table ? s.table.rows.flat() : []), ...(s.tips || []).flat(), s.note || ``].join(` `) })),
+      ...WS.filter(w => w.answer).map(w => ({ go: w.id, where: `${w.label} 워크시트 · 예시답안`, title: w.title, text: [w.goal, w.hint, ...w.answer.tables.flatMap(t => t.rows.flat()), ...(w.answer.qa || []).flat(), w.answer.coach || ``].join(` `) })),
+    ];
+    return docs.map(d => {
+      const lt = d.text.toLowerCase(), lti = d.title.toLowerCase();
+      const score = terms.reduce((a, t) => a + (lti.includes(t) ? 3 : 0) + (lt.split(t).length - 1), 0);
+            const first = terms.map(t => lt.indexOf(t)).filter(i => i >= 0).sort((a, b) => a - b)[0] ?? 0;
+      let snip = d.text.slice(Math.max(0, first - 40), first + 110);
+      snip = esc(snip); terms.forEach(t => { snip = snip.replace(new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, `\\$&`), `gi`), m => `<mark>${m}</mark>`); });
+      return { ...d, score, snip };
+    }).filter(d => d.score > 0).sort((a, b) => b.score - a.score).slice(0, 6);
+  }
+  function renderSearch() {
+    $(`#v-search`).innerHTML = `
+      <div class="panel"><span class="eyebrow">근거 찾기</span><h2>교안의 모든 주장에 근거를 붙입니다</h2>
+        <p>검색어를 넣고 출처를 고르면 해당 사이트의 검색 결과가 새 탭에서 열립니다. 흐름 탭의 각 장 아래 "근거 찾기" 칩을 누르면 그 주제가 여기로 들어옵니다.</p>
+        <form class="search-box" id="sform"><input id="sq" type="search" value="${esc(sq)}" aria-label="검색어" placeholder="예: 신세계 트리니티 선정 기준"><button class="btn primary" type="submit">교안에서도 찾기</button></form>
+        <div class="opts">
+          <label for="srecent"><input type="checkbox" id="srecent"${recent ? ` checked` : ``}> 최근 1년 · 최신순 우선</label>
+          <label for="ssite">공식 사이트로 좁히기 (Google · Bing · Google 뉴스)
+            <select id="ssite"><option value="">전체 웹</option>${OFFICIAL.map(([n, , u]) => { const h = new URL(u).hostname.replace(/^www\./, ``); return `<option value="${h}"${site === h ? ` selected` : ``}>${esc(n)}</option>`; }).join(``)}</select></label>
+        </div>
+        <div id="engines" style="display:grid;gap:16px"></div>
+      </div>
+      <div class="panel"><span class="eyebrow">교안 안에서</span><h2>이 검색어가 나오는 곳</h2><div class="hits" id="hits"></div></div>
+      <div class="panel"><span class="eyebrow">주제별 검색어</span><h2>흐름 순서대로 근거 찾기</h2><p>각 단계의 핵심 주장을 확인할 수 있는 검색어입니다. 누르면 위 검색창에 들어갑니다.</p>
+        <div class="topics">${PARTS.map(p => `<div class="topic"><b>PART ${p.no} ${p.name}</b><div class="row">${[...new Set(p.slides.flatMap(s => s.q))].map(q => `<button class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join(``)}</div></div>`).join(``)}</div>
+      </div>
+      <div class="panel"><span class="eyebrow">1차 출처</span><h2>공식 홈페이지</h2><p>벤치마킹 수치(등급 기준 금액, 적립률)는 수시로 바뀝니다. 기사보다 공식 공지를 먼저 확인하십시오.</p>
+        <div class="official">${OFFICIAL.map(([n, d, u]) => `<a href="${u}" target="_blank" rel="noopener"><b>${esc(n)}</b><small>${esc(d)}</small><code>${u.replace(/^https:\/\//, ``)}</code></a>`).join(``)}</div>
+      </div>
+      <div class="panel"><span class="eyebrow">근거를 읽는 순서</span><h2>찾은 자료를 어떻게 판단할까</h2>
+        <ol class="how">
+          <li><b>공식 공지</b> · 등급 기준과 혜택은 회사 홈페이지와 앱 공지가 1차 근거입니다.</li>
+          <li><b>날짜</b> · 기사는 작성일을 확인하십시오. "최근 1년"을 켜면 오래된 기사를 거를 수 있습니다.</li>
+          <li><b>숫자의 출처</b> · "유지 비용 5분의 1" 같은 통계는 원 출처(보고서, 논문)까지 거슬러 올라가 보십시오. 논문 검색이 그 용도입니다.</li>
+          <li><b>영상</b> · 유튜브는 매장 경험과 라운지 모습처럼 글로 전하기 어려운 장면을 확인하는 데 씁니다. 수치 근거로는 쓰지 마십시오.</li>
+          <li><b>케이스와 대조</b> · 찾은 사례가 A백화점 케이스의 어느 숫자(Gold 이탈 22%, 하락 610명)를 움직이는지 연결해 보십시오.</li>
+        </ol>
+      </div>`;
+    drawEngines(); drawHits();
+    $(`#sform`).addEventListener(`submit`, e => { e.preventDefault(); drawHits(); });
+    $(`#sq`).addEventListener(`input`, e => { sq = e.target.value; store.set(`sq`, sq); drawEngines(); });
+    $(`#srecent`).addEventListener(`change`, e => { recent = e.target.checked; store.set(`recent`, recent); drawEngines(); });
+    $(`#ssite`).addEventListener(`change`, e => { site = e.target.value; store.set(`site`, site); drawEngines(); });
+  }
+  function drawEngines() {
+    const byId = Object.fromEntries(ENGINES.map(e => [e.id, e]));
+    const empty = !sq.trim();
+    $(`#engines`).innerHTML = KINDS.map(([k, ids]) => `<div><div class="group-h"><h3>${k}</h3></div><div class="engines">${ids.map(id => { const e = byId[id];
+      return `<a class="engine" ${empty ? `aria-disabled="true"` : `href="${esc(engineUrl(e))}" target="_blank" rel="noopener"`}><b>${e.name}</b><small>${e.kind}</small><span class="go">${empty ? `검색어를 입력하십시오` : `"${esc(sq.length > 18 ? sq.slice(0, 18) + `…` : sq)}" 검색 ↗`}</span></a>`; }).join(``)}</div></div>`).join(``);
+  }
+  function drawHits() {
+    const h = localHits(sq);
+    $(`#hits`).innerHTML = h.length ? h.map(d => `<button class="hit" data-go="${d.go}"><small>${esc(d.where)}</small><b>${esc(d.title)}</b><p>…${d.snip}…</p></button>`).join(``) : `<p class="note">교안 안에서 일치하는 내용이 없습니다. 위의 외부 출처에서 찾아보십시오.</p>`;
+  }
+  function search(q) {
+    sq = q; store.set(`sq`, sq);
+    show(`search`);
+    $(`#sq`).value = q; drawEngines(); drawHits();
+  }
+
+  /* ---------- boot ---------- */
+  renderFlow(); renderTime(); renderCalc(); renderWs(); renderSearch();
+  const h = location.hash.slice(1);
+  show(TABS.includes(h) ? h : store.get(`tab`, `flow`));
+})();
+</script>

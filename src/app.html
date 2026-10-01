@@ -1,0 +1,605 @@
+<title>VIP 멤버십 마케팅 랩</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700;900&display=swap">
+<style>
+/* Layout: 멤버십 카드처럼 등급(tier)을 축으로 한 단일 칼럼 학습 노트 + 상단 고정 탭. 흐름 → 계산 → 실습 → 근거 순으로 이동 */
+:root {
+  --bg: #eef0f3;
+  --surface: #ffffff;
+  --sunk: #e4e7ec;
+  --ink: #18202e;
+  --muted: #5a6476;
+  --line: #d3d8e0;
+  --accent: #7a1f35;
+  --accent-soft: #f4e4e8;
+  --brass: #8a6a2c;
+  --brass-soft: #f3ecdc;
+  --good: #2f6b45;
+  --warn: #9a5b12;
+  --bad: #a3261f;
+  --f-display: "Noto Serif KR", "Apple SD Gothic Neo", "Malgun Gothic", serif;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11141a; --surface: #191e27; --sunk: #222834; --ink: #e7e9ee; --muted: #9aa3b3; --line: #2e3542;
+    --accent: #e0889b; --accent-soft: #3a1f27; --brass: #d2b475; --brass-soft: #2f2a1d;
+    --good: #7fc79a; --warn: #e3ac62; --bad: #f08a80; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11141a; --surface: #191e27; --sunk: #222834; --ink: #e7e9ee; --muted: #9aa3b3; --line: #2e3542;
+  --accent: #e0889b; --accent-soft: #3a1f27; --brass: #d2b475; --brass-soft: #2f2a1d;
+  --good: #7fc79a; --warn: #e3ac62; --bad: #f08a80; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.65; margin: 0; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.3; margin: 0; }
+a { color: var(--accent); }
+button, input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+/* header */
+header.top { padding-block: 28px 0; }
+.brand { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.brand h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 900; letter-spacing: -.01em; }
+.brand h1 small { display: block; font-family: var(--f-body); font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0; margin-bottom: 6px; }
+.tierline { display: flex; gap: 3px; align-items: flex-end; height: 34px; }
+.tierline span { width: 14px; background: var(--brass); border-radius: 2px 2px 0 0; opacity: .35; }
+.tierline span:nth-child(1) { height: 30%; } .tierline span:nth-child(2) { height: 45%; opacity: .5; }
+.tierline span:nth-child(3) { height: 62%; opacity: .65; } .tierline span:nth-child(4) { height: 80%; opacity: .8; }
+.tierline span:nth-child(5) { height: 100%; background: var(--accent); opacity: 1; }
+.lede { max-width: 62ch; color: var(--muted); margin: 12px 0 0; }
+
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); margin-top: 20px; }
+nav.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+nav.tabs a { flex: none; padding: 12px 14px 10px; text-decoration: none; color: var(--muted); font-weight: 600; border-bottom: 2px solid transparent; white-space: nowrap; }
+nav.tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.tabs a:hover { color: var(--ink); }
+main { padding-block: 28px 80px; }
+section.view { display: grid; gap: 28px; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 13.5px; font-weight: 600; text-decoration: none; color: var(--ink); }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn.ghost { background: transparent; }
+.btn.sm { padding: 4px 9px; font-size: 12.5px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* flow spine */
+.spine { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; counter-reset: p; }
+.spine a { position: relative; display: grid; gap: 2px; padding: 12px 10px 10px; text-decoration: none; color: var(--ink); border-top: 3px solid var(--line); }
+.spine a:hover { border-top-color: var(--accent); }
+.spine a b { font-family: var(--f-mono); font-size: 12px; color: var(--accent); font-weight: 500; }
+.spine a span { font-weight: 600; font-size: 14px; }
+.spine a em { font-style: normal; font-size: 12px; color: var(--muted); line-height: 1.4; }
+@media (max-width: 760px) { .spine { grid-template-columns: repeat(2, minmax(0, 1fr)); } .spine a:last-child { grid-column: span 2; } }
+
+.part { display: grid; gap: 14px; scroll-margin-top: 64px; }
+.part-head { display: grid; gap: 6px; padding-top: 8px; }
+.part-head h2 { font-size: clamp(22px, 3.4vw, 30px); }
+.part-q { font-family: var(--f-display); font-size: 17px; color: var(--accent); font-weight: 600; margin: 0; }
+.slides { display: grid; gap: 10px; }
+details.slide { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+details.slide > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 52px minmax(0,1fr) auto; gap: 12px; align-items: baseline; padding: 14px 16px; }
+details.slide > summary::-webkit-details-marker { display: none; }
+details.slide > summary .pg { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+details.slide > summary h3 { font-size: 17px; }
+details.slide > summary p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
+details.slide > summary .chev { color: var(--muted); font-size: 13px; transition: transform .15s; }
+details.slide[open] > summary .chev { transform: rotate(90deg); }
+.slide-body { padding: 0 16px 16px 80px; display: grid; gap: 14px; min-width: 0; }
+@media (max-width: 640px) { .slide-body { padding-left: 16px; } details.slide > summary { grid-template-columns: 40px minmax(0,1fr) auto; } }
+.items { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.item { border-left: 2px solid var(--brass); padding: 2px 0 2px 12px; min-width: 0; }
+.item b { display: block; font-size: 14.5px; }
+.item p, .item ul { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+.item ul { padding-left: 18px; }
+.tips { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.tip { background: var(--brass-soft); border-radius: var(--r); padding: 12px 14px; min-width: 0; }
+.tip b { display: block; color: var(--brass); font-size: 14px; margin-bottom: 2px; }
+.tip p { margin: 0; font-size: 14px; }
+.formula { display: grid; gap: 4px; font-family: var(--f-mono); font-size: 13.5px; background: var(--sunk); padding: 12px 14px; border-radius: var(--r); overflow-x: auto; }
+.note { font-size: 12.5px; color: var(--muted); margin: 0; }
+.journey { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-weight: 600; font-size: 14px; }
+.journey i { font-style: normal; color: var(--muted); }
+.journey span { padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; }
+.evidence { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 10px; border-top: 1px dashed var(--line); }
+.evidence > span { font-size: 12px; color: var(--muted); font-weight: 600; margin-right: 4px; }
+.chip { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 3px 10px; font-size: 12.5px; cursor: pointer; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.bridge { display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 10px; padding: 14px 0 4px; color: var(--ink); }
+.bridge::before { content: "↓"; font-family: var(--f-display); font-size: 22px; color: var(--accent); line-height: 1.2; text-align: center; }
+.bridge p { margin: 0; max-width: 68ch; font-size: 15px; }
+.bridge p b { color: var(--accent); }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { background: var(--sunk); font-weight: 600; white-space: nowrap; font-size: 12.5px; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+td.n, th.n { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.k { font-weight: 600; white-space: nowrap; }
+tr.total td { background: var(--sunk); font-weight: 600; }
+
+/* timetable */
+.tt td:first-child { font-family: var(--f-mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: var(--sunk); color: var(--muted); }
+.tag.lec { background: var(--brass-soft); color: var(--brass); }
+.tag.ws { background: var(--accent-soft); color: var(--accent); }
+tr.rest td { color: var(--muted); }
+
+/* calculator */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.panel h2 { font-size: 22px; }
+.panel > p { margin: 0; color: var(--muted); max-width: 70ch; }
+.calc input[type=number], .calc input[type=text] { width: 100%; min-width: 58px; padding: 5px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); font-family: var(--f-mono); font-size: 13px; text-align: right; }
+.calc input[type=text] { text-align: left; font-family: var(--f-body); font-weight: 600; min-width: 64px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.kpi { border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 2px; background: var(--surface); }
+.kpi span { font-size: 12.5px; color: var(--muted); }
+.kpi b { font-family: var(--f-mono); font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.kpi small { font-size: 12.5px; }
+.ok { color: var(--good); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid currentColor; white-space: nowrap; font-family: var(--f-body); }
+.settings { display: flex; flex-wrap: wrap; gap: 14px; }
+.settings label { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.settings input { width: 120px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); font-family: var(--f-mono); }
+.sim { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: center; }
+@media (max-width: 700px) { .sim { grid-template-columns: 1fr; } }
+.sim input[type=range] { width: 100%; accent-color: var(--accent); }
+.bars { display: grid; gap: 8px; }
+.bar { display: grid; grid-template-columns: 64px minmax(0,1fr) 92px; gap: 8px; align-items: center; font-size: 13px; }
+.bar div { height: 14px; background: var(--sunk); border-radius: 3px; overflow: hidden; }
+.bar div i { display: block; height: 100%; background: var(--brass); }
+.bar.after div i { background: var(--accent); }
+
+/* worksheets */
+.ws-layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 820px) { .ws-layout { grid-template-columns: 1fr; } }
+.ws-list { display: grid; gap: 4px; position: sticky; top: 64px; }
+@media (max-width: 820px) { .ws-list { position: static; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
+.ws-list button { text-align: left; border: 1px solid transparent; background: transparent; padding: 8px 10px; border-radius: var(--r); cursor: pointer; display: grid; gap: 0; }
+.ws-list button small { color: var(--muted); font-size: 12px; }
+.ws-list button b { font-weight: 600; font-size: 14px; }
+.ws-list button[aria-pressed="true"] { background: var(--surface); border-color: var(--line); }
+.ws-list button[aria-pressed="true"] small { color: var(--accent); }
+.ws-list button .done { font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); }
+.ws-head { display: grid; gap: 6px; }
+.ws-head h2 { font-size: clamp(22px, 3vw, 28px); }
+.ws-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--muted); font-size: 13.5px; }
+.callout { border: 1px solid var(--line); border-left: 3px solid var(--accent); background: var(--surface); padding: 12px 14px; border-radius: var(--r); font-size: 14px; }
+.callout b { color: var(--accent); }
+.ws-fields { display: flex; flex-wrap: wrap; gap: 12px; }
+.ws-fields label { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.ws-fields input { padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); width: 180px; }
+.wsgrid td { padding: 4px; min-width: 140px; }
+.wsgrid td.k { padding: 8px 10px; min-width: 120px; white-space: normal; }
+.wsgrid textarea { width: 100%; min-height: 64px; resize: vertical; border: 1px solid transparent; background: var(--bg); border-radius: 4px; padding: 6px 8px; font-size: 13.5px; line-height: 1.5; }
+.wsgrid textarea:focus { border-color: var(--accent); background: var(--surface); outline: none; }
+.wsgrid td.fixed { color: var(--muted); padding: 8px 10px; font-size: 13px; }
+.qa { display: grid; gap: 6px; }
+.qa label { font-weight: 600; font-size: 14px; }
+.qa textarea { width: 100%; min-height: 84px; border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; background: var(--surface); resize: vertical; }
+.answer { display: grid; gap: 12px; background: var(--accent-soft); border-radius: var(--r); padding: 16px; }
+.answer h3 { font-size: 18px; color: var(--accent); }
+.answer .tbl { background: var(--surface); }
+.answer .qa-a { display: grid; gap: 2px; } .answer .qa-a b { font-size: 14px; } .answer .qa-a p { margin: 0; font-size: 14px; }
+.answer ul { margin: 0; padding-left: 18px; font-size: 14px; }
+.coach { font-size: 13.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.coach b { color: var(--accent); }
+.status { font-size: 13px; color: var(--good); min-height: 1.2em; }
+
+/* search */
+.search-box { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.search-box input { padding: 12px 14px; font-size: 16px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); min-width: 0; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13.5px; color: var(--muted); align-items: center; }
+.opts label { display: inline-flex; gap: 6px; align-items: center; }
+.opts select { padding: 4px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); max-width: 100%; }
+.engines { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.engine { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); text-decoration: none; color: var(--ink); }
+.engine:hover { border-color: var(--accent); }
+.engine b { font-size: 15px; }
+.engine small { color: var(--muted); font-size: 12px; }
+.engine .go { color: var(--accent); font-size: 12.5px; font-weight: 600; }
+.group-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.group-h h3 { font-size: 17px; }
+.group-h span { color: var(--muted); font-size: 13px; }
+.topics { display: grid; gap: 12px; }
+.topic { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+@media (max-width: 600px) { .topic { grid-template-columns: 1fr; gap: 4px; } }
+.topic > b { font-size: 13px; color: var(--accent); }
+.hits { display: grid; gap: 6px; }
+.hit { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); cursor: pointer; text-align: left; }
+.hit:hover { border-color: var(--accent); }
+.hit small { color: var(--muted); font-size: 12px; }
+.hit p { margin: 0; font-size: 13.5px; color: var(--muted); }
+mark { background: var(--brass-soft); color: var(--ink); padding: 0 2px; border-radius: 2px; }
+.official { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.official a { display: grid; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); text-decoration: none; color: var(--ink); min-width: 0; }
+.official a small { color: var(--muted); font-size: 12px; }
+.official a code { font-family: var(--f-mono); font-size: 11.5px; color: var(--accent); overflow-wrap: anywhere; }
+.how { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; color: var(--muted); max-width: 72ch; }
+.how b { color: var(--ink); }
+footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-block: 18px 30px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1><small>롯데 청년 직무 아카데미 LOTTE LIFT · 유통·리테일 전문가 과정 · 3-5</small>VIP 멤버십 마케팅 랩</h1>
+      <div class="tierline" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+    <p class="lede">교안 43장을 일곱 단계의 흐름으로 다시 엮었습니다. 흐름을 따라 읽고, 케이스 숫자를 직접 계산하고, 워크시트를 채우고, 모든 주장에 대한 근거를 웹 · 뉴스 · 유튜브 · 논문에서 바로 찾을 수 있습니다.</p>
+  </div>
+  <nav class="tabs" aria-label="화면 이동">
+    <div class="wrap">
+      <a href="#flow" data-tab="flow">의미의 흐름</a>
+      <a href="#time" data-tab="time">타임테이블</a>
+      <a href="#calc" data-tab="calc">케이스 · 계산기</a>
+      <a href="#ws" data-tab="ws">실습 워크시트</a>
+      <a href="#search" data-tab="search">근거 찾기</a>
+    </div>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="view" id="v-flow"></section>
+  <section class="view" id="v-time" hidden></section>
+  <section class="view" id="v-calc" hidden></section>
+  <section class="view" id="v-ws" hidden></section>
+  <section class="view" id="v-search" hidden></section>
+</main>
+<footer><div class="wrap">케이스 수치(A백화점)는 교육용 가상 데이터입니다. 벤치마킹 수치는 2026년 9월 확인 기준이며 수시로 바뀌므로 근거 찾기 탭에서 최신 공지를 확인하십시오. 워크시트 입력 내용은 이 브라우저에만 저장됩니다.</div></footer>
+
+<script>
+/*@DATA@*/
+</script>
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = s => String(s ?? ``).replace(/[&<>"]/g, c => ({ "&": `&amp;`, "<": `&lt;`, ">": `&gt;`, '"': `&quot;` })[c]);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(`vipml:` + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(`vipml:` + k, JSON.stringify(v)); } catch {} },
+    del(k) { try { localStorage.removeItem(`vipml:` + k); } catch {} },
+  };
+  const fmt = (n, d = 0) => Number.isFinite(n) ? n.toLocaleString(`ko-KR`, { maximumFractionDigits: d, minimumFractionDigits: d }) : `—`;
+  const won = man => { // 만원 단위 → 읽기 쉬운 표기
+    if (!Number.isFinite(man)) return `—`;
+    if (Math.abs(man) >= 10000) { const eok = Math.floor(man / 10000), rest = Math.round(man - eok * 10000); return `${eok}억` + (rest ? ` ${fmt(rest)}만원` : `원`); }
+    return `${fmt(man, man < 10 && man % 1 ? 2 : 0)}만원`;
+  };
+  const allSlides = PARTS.flatMap(p => p.slides.map(s => ({ ...s, part: p })));
+
+  /* ---------- tabs ---------- */
+  const TABS = [`flow`, `time`, `calc`, `ws`, `search`];
+  function show(tab, focusId) {
+    if (!TABS.includes(tab)) tab = `flow`;
+    TABS.forEach(t => { $(`#v-` + t).hidden = t !== tab; });
+    document.querySelectorAll(`nav.tabs a`).forEach(a => a.dataset.tab === tab ? a.setAttribute(`aria-current`, `page`) : a.removeAttribute(`aria-current`));
+    store.set(`tab`, tab);
+    if (focusId) {
+      const el = document.getElementById(focusId);
+      if (el) { if (el.tagName === `DETAILS`) el.open = true; el.scrollIntoView({ block: `start` }); return; }
+    }
+    window.scrollTo({ top: 0 });
+  }
+  document.querySelectorAll(`nav.tabs a`).forEach(a => a.addEventListener(`click`, e => { e.preventDefault(); history.replaceState(null, ``, `#` + a.dataset.tab); show(a.dataset.tab); }));
+  function go(target) { // target: 'calc' | 'ws01' | 'p3' | 'case' ...
+    if (target === `calc`) return show(`calc`);
+    if (WS.some(w => w.id === target)) { openWs(target); return show(`ws`); }
+    show(`flow`, target);
+  }
+  document.addEventListener(`click`, e => {
+    const g = e.target.closest(`[data-go]`); if (g) { e.preventDefault(); go(g.dataset.go); }
+    const q = e.target.closest(`[data-q]`); if (q) { e.preventDefault(); search(q.dataset.q); }
+  });
+
+  /* ---------- flow ---------- */
+  function caseTable() {
+    const r = CASE.rows.map(([g, n, buy, rev, share, churn, cost]) =>
+      `<tr><td class="k">${g}</td><td class="n">${fmt(n)}명</td><td class="n">${won(buy)}</td><td class="n">${rev}억원</td><td class="n">${share}</td><td class="n">${churn == null ? `—` : churn + `%`}</td><td class="n">${fmt(cost, cost % 1 ? 1 : 0)}만원</td></tr>`).join(``);
+    return `<div class="tbl"><table><thead><tr><th>등급</th><th class="n">인원</th><th class="n">1인 연 구매액</th><th class="n">등급 매출</th><th class="n">매출 비중</th><th class="n">연 이탈률</th><th class="n">1인 연 혜택 원가</th></tr></thead><tbody>${r}<tr class="total">${CASE.total.map((c, i) => `<td class="${i ? `n` : `k`}">${c}</td>`).join(``)}</tr></tbody></table></div>
+    <div class="tbl"><table><tbody>${CASE.extra.map(([k, v]) => `<tr><td class="k">${k}</td><td>${v}</td></tr>`).join(``)}</tbody></table></div>`;
+  }
+  function plainTable(t) {
+    return `<div class="tbl"><table><thead><tr>${t.cols.map(c => `<th>${esc(c)}</th>`).join(``)}</tr></thead><tbody>${t.rows.map(r => `<tr>${r.map((c, i) => `<td${i ? `` : ` class="k"`}>${esc(c)}</td>`).join(``)}</tr>`).join(``)}</tbody></table></div>`;
+  }
+  function slideHtml(s, open) {
+    let b = ``;
+    if (s.items) b += `<div class="items">${s.items.map(([h, d]) => `<div class="item"><b>${esc(h)}</b><p>${esc(d)}</p></div>`).join(``)}</div>`;
+    if (s.groups) b += `<div class="items">${s.groups.map(([h, l]) => `<div class="item"><b>${esc(h)}</b><ul>${l.map(x => `<li>${esc(x)}</li>`).join(``)}</ul></div>`).join(``)}</div>`;
+    if (s.formula) b += `<div class="formula">${s.formula.map(f => `<div>${esc(f)}</div>`).join(``)}</div>`;
+    if (s.table) b += plainTable(s.table);
+    if (s.caseTable) b += caseTable();
+    if (s.journey) b += `<div class="journey">${s.journey.map(x => `<span>${x}</span>`).join(`<i>→</i>`)}<i>→</i><span>인식</span></div>`;
+    if (s.tips) b += `<div class="tips">${s.tips.map(([h, d]) => `<div class="tip"><b>${esc(h)}</b><p>${esc(d)}</p></div>`).join(``)}</div>`;
+    if (s.note) b += `<p class="note">※ ${esc(s.note)}</p>`;
+    if (s.link) b += `<div class="row"><a class="btn" href="#" data-go="${s.link[0]}">${esc(s.link[1])} →</a></div>`;
+    b += `<div class="evidence"><span>근거 찾기</span>${s.q.map(q => `<button class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join(``)}</div>`;
+    return `<details class="slide" id="${s.id}"${open ? ` open` : ``}><summary><span class="pg">p.${s.page}</span><div><h3>${esc(s.title)}</h3><p>${esc(s.sub)}</p></div><span class="chev" aria-hidden="true">▶</span></summary><div class="slide-body">${b}</div></details>`;
+  }
+  function renderFlow() {
+    const spine = `<nav class="spine" aria-label="7단계 흐름">${PARTS.map(p => `<a href="#" data-go="${p.id}"><b>PART ${p.no}</b><span>${p.name}</span><em>${esc(p.title)}</em></a>`).join(``)}</nav>`;
+    const parts = PARTS.map((p, i) => {
+      const wss = WS.filter(w => w.part === p.id);
+      return `<article class="part" id="${p.id}">
+        <div class="part-head"><span class="eyebrow">PART ${p.no} · ${p.name}</span><h2>${esc(p.title)}</h2><p class="part-q">${esc(p.question)}</p></div>
+        <div class="slides">${p.slides.map((s, j) => slideHtml(s, i === 0 && j === 0)).join(``)}</div>
+        ${wss.length ? `<div class="row">${wss.map(w => `<a class="btn ghost" href="#" data-go="${w.id}">✎ ${w.label} ${esc(w.title)} · ${w.time}</a>`).join(``)}</div>` : ``}
+        ${p.bridge ? `<div class="bridge"><p><b>다음 흐름으로 · </b>${esc(p.bridge)}</p></div>` : `<div class="bridge"><p><b>정리 · </b>이해(왜) → 벤치마크(남은 어떻게) → 등급(누구에게) → 혜택·수익성(무엇을 얼마로) → 유지·이탈(어떻게 지키나) → 개인화·CX(어떻게 말하나) → 균형·실행(무엇이 달라지나). 실습 ⑦ 기획안이 이 일곱 단계를 한 장에 다시 모읍니다.</p></div>`}
+      </article>`;
+    }).join(``);
+    $(`#v-flow`).innerHTML = spine + parts;
+  }
+
+  /* ---------- timetable ---------- */
+  function renderTime() {
+    const rows = TIMETABLE.map(([t, kind, what, link]) => {
+      const cls = kind === `강의` ? `lec` : kind.startsWith(`실습`) ? `ws` : ``;
+      const rest = !what;
+      return `<tr class="${rest ? `rest` : ``}"><td>${t}</td><td><span class="tag ${cls}">${kind}</span></td><td>${esc(what) || `—`}</td><td>${link ? `<a href="#" data-go="${link}">열기 →</a>` : ``}</td></tr>`;
+    }).join(``);
+    $(`#v-time`).innerHTML = `<div class="panel"><span class="eyebrow">강사용 큐시트 · 8시간</span><h2>하루의 흐름</h2><p>오전은 이해와 벤치마크, 오후는 설계와 검증, 마지막은 이탈과 개인화입니다. 각 행의 "열기"를 누르면 해당 내용이나 워크시트로 이동합니다.</p><div class="tbl tt"><table><thead><tr><th>시간</th><th>구분</th><th>내용</th><th></th></tr></thead><tbody>${rows}</tbody></table></div><p class="note">실습 ⑦ 기획안(45분)과 실습 ⑧ 발표·상호 평가(50분), 추가 실습(재방문 유도, 25분)은 통합본 후반부에 이어집니다.</p></div>`;
+  }
+
+  /* ---------- calculator ---------- */
+  const PRESETS = {
+    current: { label: `현재 케이스`, rows: CASE.rows.map(([g, n, buy, , , churn, cost]) => ({ g, n, buy, churn: churn ?? 50, cost })) },
+    design: { label: `예시답안 설계 (WS 02 · 04)`, rows: [
+      { g: `VVIP`, n: 150, buy: 8000, churn: 5, cost: 430 },
+      { g: `VIP`, n: 950, buy: 2200, churn: 12, cost: 88 },
+      { g: `Gold`, n: 4200, buy: 620, churn: 22, cost: 18 },
+      { g: `Silver`, n: 12500, buy: 150, churn: 35, cost: 2.5 },
+      { g: `일반`, n: 66370, buy: 26, churn: 50, cost: 0.13 },
+    ] },
+  };
+  let calc = store.get(`calc`, null) || { gp: 30, budget: 30, ops: 3.6, limit: 20, rows: PRESETS.current.rows.map(r => ({ ...r })) };
+  const years = churn => churn > 0 ? Math.round(10 / (churn / 100)) / 10 : NaN; // 교안과 같이 소수 첫째 자리 반올림
+  const ltv = (buy, churn, gp) => buy * (gp / 100) * years(churn);
+  function renderCalc() {
+    $(`#v-calc`).innerHTML = `
+      <div class="panel"><span class="eyebrow">p.16 · 실습 케이스</span><h2>A백화점 등급별 고객 현황</h2><p>연간 기준입니다. 모든 실습은 이 데이터를 근거로 진행합니다. (교육용 가상 데이터)</p>${caseTable()}</div>
+      <div class="panel calc"><span class="eyebrow">p.20 · 실습 ② ④ 계산</span><h2>등급 설계 · LTV · 예산 계산기</h2>
+        <p>인원, 구매액, 이탈률, 1인 혜택 원가를 바꾸면 LTV와 예산이 바로 다시 계산됩니다. 평균 유지 연수 ≒ 1 ÷ 연 이탈률, LTV = 연 구매금액 × GP율 × 평균 유지 연수. 일반 등급 이탈률 50%는 교안의 "LTV 약 15만원"에 맞춘 가정입니다.</p>
+        <div class="row"><span class="note">불러오기</span><button class="btn sm" data-preset="current">현재 케이스</button><button class="btn sm" data-preset="design">예시답안 설계 (WS 02 · 04)</button><button class="btn sm ghost" id="addRow">+ 등급 추가</button></div>
+        <div class="settings">
+          <label for="c-gp">GP율 (%)<input id="c-gp" type="number" step="1" value="${calc.gp}"></label>
+          <label for="c-limit">혜택 투자 한도 (LTV × %)<input id="c-limit" type="number" step="5" value="${calc.limit}"></label>
+          <label for="c-budget">연간 예산 (억원)<input id="c-budget" type="number" step="0.1" value="${calc.budget}"></label>
+          <label for="c-ops">운영비 (억원)<input id="c-ops" type="number" step="0.1" value="${calc.ops}"></label>
+        </div>
+        <div class="kpis" id="kpis"></div>
+        <div class="tbl"><table id="ctable"></table></div>
+        <p class="note">판정 · 1인 혜택 원가가 투자 한도(LTV × ${calc.limit}%)의 10% 미만이면 "여유(더 쓸 수 있음)", 100%를 넘으면 "과다"입니다. 교안 예시답안의 VVIP·VIP "부족"은 한도 대비 덜 쓰고 있다는 뜻입니다.</p>
+      </div>
+      <div class="panel"><span class="eyebrow">p.20 · 이탈률이 LTV를 결정합니다</span><h2>이탈률 개선 시뮬레이터</h2>
+        <p>예시: Silver 이탈률 35% → 25%이면 평균 유지 2.9년 → 4년, LTV 131만원 → 180만원. Gold 22% → 16%이면 LTV 837만원 → 약 1,163만원(실습 ⑦ 목표).</p>
+        <div class="sim"><div class="settings">
+          <label for="s-grade">등급<select id="s-grade">${calc.rows.map((r, i) => `<option value="${i}"${r.g === `Silver` ? ` selected` : ``}>${esc(r.g)}</option>`).join(``)}</select></label>
+          <label for="s-churn" style="flex:1;min-width:200px">개선 후 연 이탈률 <span id="s-val" class="num"></span><input id="s-churn" type="range" min="1" max="60" step="1" value="25"></label>
+        </div><div class="bars" id="s-bars"></div></div>
+      </div>`;
+    drawCalc(); drawSim();
+  }
+  $(`#v-calc`).addEventListener(`input`, onCalcInput);
+  $(`#v-calc`).addEventListener(`click`, e => {
+      const p = e.target.closest(`[data-preset]`);
+      if (p) { calc.rows = PRESETS[p.dataset.preset].rows.map(r => ({ ...r })); saveCalc(); renderCalc(); }
+      if (e.target.id === `addRow`) { calc.rows.push({ g: `새 등급`, n: 0, buy: 0, churn: 30, cost: 0 }); saveCalc(); renderCalc(); }
+      const del = e.target.closest(`[data-del]`);
+      if (del) { calc.rows.splice(+del.dataset.del, 1); saveCalc(); renderCalc(); }
+  });
+  function saveCalc() { store.set(`calc`, calc); }
+  function onCalcInput(e) {
+    const t = e.target;
+    if (t.id === `c-gp`) calc.gp = +t.value; else if (t.id === `c-budget`) calc.budget = +t.value; else if (t.id === `c-ops`) calc.ops = +t.value; else if (t.id === `c-limit`) calc.limit = +t.value;
+    else if (t.dataset.r != null) { const r = calc.rows[+t.dataset.r]; r[t.dataset.f] = t.dataset.f === `g` ? t.value : +t.value; }
+    else if (t.id === `s-grade` || t.id === `s-churn`) return drawSim();
+    else return;
+    saveCalc(); drawCalc(true); drawSim();
+  }
+  function drawCalc(keepInputs) {
+    const R = calc.rows.map(r => {
+      const y = years(r.churn), L = ltv(r.buy, r.churn, calc.gp), lim = L * calc.limit / 100;
+      return { ...r, y, L, lim, ratio: r.cost / L, use: r.cost / lim, total: r.cost * r.n / 10000, rev: r.buy * r.n / 10000 };
+    });
+    const N = R.reduce((a, r) => a + r.n, 0), cost = R.reduce((a, r) => a + r.total, 0), rev = R.reduce((a, r) => a + r.rev, 0);
+    const top2 = R.slice(0, 2).reduce((a, r) => a + r.rev, 0);
+    const spend = cost + calc.ops, okB = spend <= calc.budget + 0.05, okN = N === 84170;
+    $(`#kpis`).innerHTML = `
+      <div class="kpi"><span>인원 합계 (케이스 84,170명)</span><b>${fmt(N)}명</b><small class="${okN ? `ok` : `warn`}">${okN ? `케이스와 일치` : `차이 ${fmt(N - 84170)}명 · 어느 등급에서 새는지 확인`}</small></div>
+      <div class="kpi"><span>혜택 원가 + 운영비</span><b>${fmt(spend, 2)}억</b><small class="${okB ? `ok` : `bad`}">${okB ? `예산 ${calc.budget}억 이내` : `예산 ${fmt(spend - calc.budget, 2)}억 초과`}</small></div>
+      <div class="kpi"><span>연 매출 추정 (인원 × 구매액)</span><b>${fmt(rev)}억</b><small>케이스 838억 대비 ${rev >= 838 ? `+` : ``}${fmt(rev - 838)}억</small></div>
+      <div class="kpi"><span>상위 2등급 매출 비중</span><b>${fmt(top2 / rev * 100, 1)}%</b><small>현재 33.8% · 목표 37%</small></div>`;
+    const head = `<thead><tr><th>등급</th><th class="n">인원</th><th class="n">비중</th><th class="n">1인 연 구매액(만원)</th><th class="n">연 이탈률(%)</th><th class="n">1인 혜택 원가(만원)</th><th class="n">평균 유지</th><th class="n">1인 LTV</th><th class="n">혜택÷LTV</th><th class="n">투자 한도</th><th class="n">등급 총 원가</th><th>판정</th><th></th></tr></thead>`;
+    const body = R.map((r, i) => {
+      const verdict = !Number.isFinite(r.use) ? `<span class="pill">—</span>` : r.use > 1 ? `<span class="pill bad">과다</span>` : r.use < .1 ? `<span class="pill ok">여유</span>` : `<span class="pill warn">적정</span>`;
+      const inp = (f, step) => `<input type="${f === `g` ? `text` : `number`}" id="c-${i}-${f}" data-r="${i}" data-f="${f}" value="${r[f]}"${step ? ` step="${step}"` : ``} aria-label="${esc(r.g)} ${f}">`;
+      return `<tr><td>${inp(`g`)}</td><td>${inp(`n`, 10)}</td><td class="n" data-o="share">${fmt(r.n / N * 100, 2)}%</td><td>${inp(`buy`, 10)}</td><td>${inp(`churn`, 1)}</td><td>${inp(`cost`, .5)}</td>
+        <td class="n">${fmt(r.y, 1)}년</td><td class="n">${won(r.L)}</td><td class="n">${fmt(r.ratio * 100, 2)}%</td><td class="n">${won(r.lim)}</td><td class="n">${fmt(r.total, 2)}억</td><td>${verdict}</td><td><button class="btn sm ghost" data-del="${i}" aria-label="${esc(r.g)} 삭제">×</button></td></tr>`;
+    }).join(``);
+    const foot = `<tr class="total"><td>합계</td><td class="n">${fmt(N)}명</td><td class="n">100%</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="n">${fmt(cost, 2)}억</td><td colspan="2"></td></tr>`;
+    const tbl = $(`#ctable`);
+    if (keepInputs && tbl.rows.length === R.length + 2) {
+      // 입력 중 포커스를 잃지 않도록 계산 칸만 갱신
+      const tmp = document.createElement(`table`); tmp.innerHTML = head + `<tbody>` + body + foot + `</tbody>`;
+      [...tmp.rows].forEach((row, ri) => [...row.cells].forEach((cell, ci) => { if (!cell.querySelector(`input`)) tbl.rows[ri].cells[ci].innerHTML = cell.innerHTML; }));
+    } else tbl.innerHTML = head + `<tbody>` + body + foot + `</tbody>`;
+  }
+  function drawSim() {
+    const sel = $(`#s-grade`), rng = $(`#s-churn`); if (!sel) return;
+    const r = calc.rows[+sel.value] || calc.rows[0]; if (!r) return;
+    const after = +rng.value; $(`#s-val`).textContent = `${after}%`;
+    const a = ltv(r.buy, r.churn, calc.gp), b = ltv(r.buy, after, calc.gp), max = Math.max(a, b) || 1;
+    $(`#s-bars`).innerHTML = `
+      <div class="bar"><span>현재 ${r.churn}%</span><div><i style="width:${a / max * 100}%"></i></div><span class="num">${won(a)}</span></div>
+      <div class="bar after"><span>개선 ${after}%</span><div><i style="width:${b / max * 100}%"></i></div><span class="num">${won(b)}</span></div>
+      <p class="note">평균 유지 ${fmt(years(r.churn), 1)}년 → ${fmt(years(after), 1)}년 · 1인 LTV ${b >= a ? `+` : ``}${won(b - a)} · ${esc(r.g)} ${fmt(r.n)}명 기준 총 ${b >= a ? `+` : ``}${fmt((b - a) * r.n / 10000, 1)}억원</p>`;
+  }
+
+  /* ---------- worksheets ---------- */
+  let curWs = store.get(`ws`, `ws01`);
+  const wsKey = (w, ...p) => `w:${w}:` + p.join(`:`);
+  function wsFilled(w) {
+    let n = 0, f = 0;
+    w.tables.forEach((t, ti) => t.rows.forEach((lab, ri) => t.cols.forEach((c, ci) => {
+      if (ci === 0 && lab) return; if (t.fixed && t.fixed[ci]) return;
+      n++; if (store.get(wsKey(w.id, ti, ri, ci), ``).trim()) f++;
+    })));
+    (w.questions || []).forEach((q, qi) => { n++; if (store.get(wsKey(w.id, `q`, qi), ``).trim()) f++; });
+    return [f, n];
+  }
+  function openWs(id) { curWs = id; store.set(`ws`, id); renderWs(); }
+  function renderWs() {
+    const w = WS.find(x => x.id === curWs) || WS[0];
+    const list = WS.map(x => { const [f, n] = wsFilled(x); return `<button aria-pressed="${x.id === w.id}" data-ws="${x.id}"><small>${x.label} · ${x.time}</small><b>${esc(x.title)}</b><span class="done">${f}/${n} 칸 작성</span></button>`; }).join(``);
+    const tables = w.tables.map((t, ti) => `<div class="tbl wsgrid"><table><thead><tr>${t.cols.map(c => `<th>${esc(c)}</th>`).join(``)}</tr></thead><tbody>${t.rows.map((lab, ri) => `<tr>${t.cols.map((c, ci) => {
+      if (ci === 0 && lab) return `<td class="k">${esc(lab)}</td>`;
+      if (t.fixed && t.fixed[ci]) return `<td class="fixed">${esc(t.fixed[ci][ri])}</td>`;
+      const id = `${w.id}-${ti}-${ri}-${ci}`;
+      return `<td><textarea id="${id}" data-k="${wsKey(w.id, ti, ri, ci)}" aria-label="${esc(lab || `행 ${ri + 1}`)} · ${esc(c)}" placeholder="${ci === 0 ? esc(c) : ``}">${esc(store.get(wsKey(w.id, ti, ri, ci), ``))}</textarea></td>`;
+    }).join(``)}</tr>`).join(``)}</tbody></table></div>`).join(``);
+    const qs = (w.questions || []).map((q, qi) => `<div class="qa"><label for="${w.id}-q${qi}">${esc(q)}</label><textarea id="${w.id}-q${qi}" data-k="${wsKey(w.id, `q`, qi)}">${esc(store.get(wsKey(w.id, `q`, qi), ``))}</textarea></div>`).join(``);
+    const showAns = store.get(`ans:` + w.id, false);
+    let ans = ``;
+    if (w.answer) {
+      const a = w.answer;
+      ans = `<div class="answer" id="ans"${showAns ? `` : ` hidden`}><h3>예시답안</h3>
+        ${a.tables.map(plainTable).join(``)}
+        ${(a.qa || []).map(([q, t]) => `<div class="qa-a"><b>${esc(q)}</b><p>${esc(t)}</p></div>`).join(``)}
+        ${a.notes ? `<ul>${a.notes.map(n => `<li>${esc(n)}</li>`).join(``)}</ul>` : ``}
+        ${a.coach ? `<p class="coach"><b>생각할 질문 · </b>${esc(a.coach)}</p>` : ``}</div>`;
+    }
+    $(`#v-ws`).innerHTML = `<div class="ws-layout"><div class="ws-list" role="list">${list}</div>
+      <div style="display:grid;gap:16px;min-width:0">
+        <div class="ws-head"><span class="eyebrow">${w.label} · ${w.time}</span><h2>${esc(w.title)}</h2><div class="ws-meta"><span>${esc(w.goal)}</span><a href="#" data-go="${w.part}">관련 흐름 보기 →</a></div></div>
+        <div class="ws-fields"><label for="${w.id}-team">조<input id="${w.id}-team" data-k="${wsKey(w.id, `team`)}" value="${esc(store.get(wsKey(w.id, `team`), ``))}"></label><label for="${w.id}-author">작성자<input id="${w.id}-author" data-k="${wsKey(w.id, `author`)}" value="${esc(store.get(wsKey(w.id, `author`), ``))}"></label></div>
+        <div class="callout"><b>힌트 · </b>${esc(w.hint)}</div>
+        ${tables}${qs}
+        <div class="row">
+          ${w.answer ? `<button class="btn primary" id="toggleAns">${showAns ? `예시답안 숨기기` : `예시답안 보기`}</button>` : ``}
+          <button class="btn" id="copyWs">내 답안 복사 (표 형식)</button>
+          ${[`ws02`, `ws04`].includes(w.id) ? `<a class="btn ghost" href="#" data-go="calc">계산기 열기 →</a>` : ``}
+          <button class="btn ghost" id="clearWs">이 워크시트 비우기</button>
+          <span class="status" id="wsStatus" role="status"></span>
+        </div>
+        ${ans}
+      </div></div>`;
+  }
+  let clearArmed = false;
+  $(`#v-ws`).addEventListener(`input`, e => { const k = e.target.dataset.k; if (k) { store.set(k, e.target.value); const s = $(`#wsStatus`); if (s) s.textContent = `저장됨`; } });
+  $(`#v-ws`).addEventListener(`click`, async e => {
+    const b = e.target.closest(`[data-ws]`); if (b) { clearArmed = false; return openWs(b.dataset.ws); }
+    const w = WS.find(x => x.id === curWs) || WS[0];
+    if (e.target.id === `toggleAns`) { const el = $(`#ans`); el.hidden = !el.hidden; store.set(`ans:` + w.id, !el.hidden); e.target.textContent = el.hidden ? `예시답안 보기` : `예시답안 숨기기`; if (!el.hidden) el.scrollIntoView({ block: `nearest` }); }
+    if (e.target.id === `clearWs`) {
+      if (!clearArmed) { clearArmed = true; e.target.textContent = `한 번 더 누르면 모두 지웁니다`; return; }
+      clearArmed = false;
+      document.querySelectorAll(`#v-ws [data-k]`).forEach(el => store.del(el.dataset.k));
+      renderWs(); $(`#wsStatus`).textContent = `비웠습니다`;
+    }
+    if (e.target.id === `copyWs`) {
+      const lines = [`# ${w.label} ${w.title}`, `조: ${store.get(wsKey(w.id, `team`), ``)} / 작성자: ${store.get(wsKey(w.id, `author`), ``)}`, ``];
+      w.tables.forEach((t, ti) => {
+        lines.push(`| ${t.cols.join(` | `)} |`, `|${t.cols.map(() => ` --- `).join(`|`)}|`);
+        t.rows.forEach((lab, ri) => lines.push(`| ` + t.cols.map((c, ci) => (ci === 0 && lab) ? lab : (t.fixed && t.fixed[ci]) ? t.fixed[ci][ri] : store.get(wsKey(w.id, ti, ri, ci), ``).replace(/\n/g, ` `)).join(` | `) + ` |`));
+        lines.push(``);
+      });
+      (w.questions || []).forEach((q, qi) => lines.push(`**${q}**`, store.get(wsKey(w.id, `q`, qi), ``), ``));
+      const text = lines.join(`\n`);
+      try { await navigator.clipboard.writeText(text); $(`#wsStatus`).textContent = `복사했습니다`; }
+      catch { const ta = document.createElement(`textarea`); ta.value = text; ta.style.cssText = `width:100%;min-height:160px`; e.target.closest(`.row`).after(ta); ta.select(); $(`#wsStatus`).textContent = `자동 복사가 막혀 아래 칸에 표시했습니다. 선택 후 복사하십시오.`; }
+    }
+  });
+
+  /* ---------- search ---------- */
+  let sq = store.get(`sq`, `백화점 VIP 마케팅`), recent = store.get(`recent`, false), site = store.get(`site`, ``);
+  const KINDS = [[`웹 · 홈페이지`, [`google`, `naver`, `daum`, `bing`]], [`기사 · 뉴스`, [`gnews`, `nnews`, `dnews`]], [`영상`, [`youtube`]], [`논문 · 연구 · 추이`, [`scholar`, `riss`, `dbpia`, `gtrends`]]];
+  function engineUrl(e) {
+    let q = sq.trim();
+    if (site && [`google`, `bing`, `gnews`].includes(e.id)) q += ` site:` + site;
+    if (recent && e.recentQ) q += e.recentQ;
+    return e.url.replace(`{q}`, encodeURIComponent(q)) + (recent && e.recent ? e.recent : ``);
+  }
+  function localHits(q) {
+    const terms = q.toLowerCase().split(/\s+/).filter(t => t.length > 1);
+    if (!terms.length) return [];
+    const docs = [
+      ...allSlides.map(s => ({ go: s.id, where: `PART ${s.part.no} ${s.part.name} · p.${s.page}`, title: s.title, text: [s.sub, ...(s.items || []).flat(), ...(s.groups || []).flatMap(g => [g[0], ...g[1]]), ...(s.table ? s.table.rows.flat() : []), ...(s.tips || []).flat(), s.note || ``].join(` `) })),
+      ...WS.filter(w => w.answer).map(w => ({ go: w.id, where: `${w.label} 워크시트 · 예시답안`, title: w.title, text: [w.goal, w.hint, ...w.answer.tables.flatMap(t => t.rows.flat()), ...(w.answer.qa || []).flat(), w.answer.coach || ``].join(` `) })),
+    ];
+    return docs.map(d => {
+      const lt = d.text.toLowerCase(), lti = d.title.toLowerCase();
+      const score = terms.reduce((a, t) => a + (lti.includes(t) ? 3 : 0) + (lt.split(t).length - 1), 0);
+            const first = terms.map(t => lt.indexOf(t)).filter(i => i >= 0).sort((a, b) => a - b)[0] ?? 0;
+      let snip = d.text.slice(Math.max(0, first - 40), first + 110);
+      snip = esc(snip); terms.forEach(t => { snip = snip.replace(new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, `\\$&`), `gi`), m => `<mark>${m}</mark>`); });
+      return { ...d, score, snip };
+    }).filter(d => d.score > 0).sort((a, b) => b.score - a.score).slice(0, 6);
+  }
+  function renderSearch() {
+    $(`#v-search`).innerHTML = `
+      <div class="panel"><span class="eyebrow">근거 찾기</span><h2>교안의 모든 주장에 근거를 붙입니다</h2>
+        <p>검색어를 넣고 출처를 고르면 해당 사이트의 검색 결과가 새 탭에서 열립니다. 흐름 탭의 각 장 아래 "근거 찾기" 칩을 누르면 그 주제가 여기로 들어옵니다.</p>
+        <form class="search-box" id="sform"><input id="sq" type="search" value="${esc(sq)}" aria-label="검색어" placeholder="예: 신세계 트리니티 선정 기준"><button class="btn primary" type="submit">교안에서도 찾기</button></form>
+        <div class="opts">
+          <label for="srecent"><input type="checkbox" id="srecent"${recent ? ` checked` : ``}> 최근 1년 · 최신순 우선</label>
+          <label for="ssite">공식 사이트로 좁히기 (Google · Bing · Google 뉴스)
+            <select id="ssite"><option value="">전체 웹</option>${OFFICIAL.map(([n, , u]) => { const h = new URL(u).hostname.replace(/^www\./, ``); return `<option value="${h}"${site === h ? ` selected` : ``}>${esc(n)}</option>`; }).join(``)}</select></label>
+        </div>
+        <div id="engines" style="display:grid;gap:16px"></div>
+      </div>
+      <div class="panel"><span class="eyebrow">교안 안에서</span><h2>이 검색어가 나오는 곳</h2><div class="hits" id="hits"></div></div>
+      <div class="panel"><span class="eyebrow">주제별 검색어</span><h2>흐름 순서대로 근거 찾기</h2><p>각 단계의 핵심 주장을 확인할 수 있는 검색어입니다. 누르면 위 검색창에 들어갑니다.</p>
+        <div class="topics">${PARTS.map(p => `<div class="topic"><b>PART ${p.no} ${p.name}</b><div class="row">${[...new Set(p.slides.flatMap(s => s.q))].map(q => `<button class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join(``)}</div></div>`).join(``)}</div>
+      </div>
+      <div class="panel"><span class="eyebrow">1차 출처</span><h2>공식 홈페이지</h2><p>벤치마킹 수치(등급 기준 금액, 적립률)는 수시로 바뀝니다. 기사보다 공식 공지를 먼저 확인하십시오.</p>
+        <div class="official">${OFFICIAL.map(([n, d, u]) => `<a href="${u}" target="_blank" rel="noopener"><b>${esc(n)}</b><small>${esc(d)}</small><code>${u.replace(/^https:\/\//, ``)}</code></a>`).join(``)}</div>
+      </div>
+      <div class="panel"><span class="eyebrow">근거를 읽는 순서</span><h2>찾은 자료를 어떻게 판단할까</h2>
+        <ol class="how">
+          <li><b>공식 공지</b> · 등급 기준과 혜택은 회사 홈페이지와 앱 공지가 1차 근거입니다.</li>
+          <li><b>날짜</b> · 기사는 작성일을 확인하십시오. "최근 1년"을 켜면 오래된 기사를 거를 수 있습니다.</li>
+          <li><b>숫자의 출처</b> · "유지 비용 5분의 1" 같은 통계는 원 출처(보고서, 논문)까지 거슬러 올라가 보십시오. 논문 검색이 그 용도입니다.</li>
+          <li><b>영상</b> · 유튜브는 매장 경험과 라운지 모습처럼 글로 전하기 어려운 장면을 확인하는 데 씁니다. 수치 근거로는 쓰지 마십시오.</li>
+          <li><b>케이스와 대조</b> · 찾은 사례가 A백화점 케이스의 어느 숫자(Gold 이탈 22%, 하락 610명)를 움직이는지 연결해 보십시오.</li>
+        </ol>
+      </div>`;
+    drawEngines(); drawHits();
+    $(`#sform`).addEventListener(`submit`, e => { e.preventDefault(); drawHits(); });
+    $(`#sq`).addEventListener(`input`, e => { sq = e.target.value; store.set(`sq`, sq); drawEngines(); });
+    $(`#srecent`).addEventListener(`change`, e => { recent = e.target.checked; store.set(`recent`, recent); drawEngines(); });
+    $(`#ssite`).addEventListener(`change`, e => { site = e.target.value; store.set(`site`, site); drawEngines(); });
+  }
+  function drawEngines() {
+    const byId = Object.fromEntries(ENGINES.map(e => [e.id, e]));
+    const empty = !sq.trim();
+    $(`#engines`).innerHTML = KINDS.map(([k, ids]) => `<div><div class="group-h"><h3>${k}</h3></div><div class="engines">${ids.map(id => { const e = byId[id];
+      return `<a class="engine" ${empty ? `aria-disabled="true"` : `href="${esc(engineUrl(e))}" target="_blank" rel="noopener"`}><b>${e.name}</b><small>${e.kind}</small><span class="go">${empty ? `검색어를 입력하십시오` : `"${esc(sq.length > 18 ? sq.slice(0, 18) + `…` : sq)}" 검색 ↗`}</span></a>`; }).join(``)}</div></div>`).join(``);
+  }
+  function drawHits() {
+    const h = localHits(sq);
+    $(`#hits`).innerHTML = h.length ? h.map(d => `<button class="hit" data-go="${d.go}"><small>${esc(d.where)}</small><b>${esc(d.title)}</b><p>…${d.snip}…</p></button>`).join(``) : `<p class="note">교안 안에서 일치하는 내용이 없습니다. 위의 외부 출처에서 찾아보십시오.</p>`;
+  }
+  function search(q) {
+    sq = q; store.set(`sq`, sq);
+    show(`search`);
+    $(`#sq`).value = q; drawEngines(); drawHits();
+  }
+
+  /* ---------- boot ---------- */
+  renderFlow(); renderTime(); renderCalc(); renderWs(); renderSearch();
+  const h = location.hash.slice(1);
+  show(TABS.includes(h) ? h : store.get(`tab`, `flow`));
+})();
+</script>
